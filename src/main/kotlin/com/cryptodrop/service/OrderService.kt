@@ -5,7 +5,7 @@ import com.cryptodrop.domain.model.OrderStatus
 import com.cryptodrop.domain.repository.OrderRepository
 import com.cryptodrop.domain.repository.ProductRepository
 import com.cryptodrop.integration.solana.SolanaService
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.kafka.core.KafkaTemplate

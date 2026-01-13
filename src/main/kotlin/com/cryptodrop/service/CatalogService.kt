@@ -4,7 +4,7 @@ import com.cryptodrop.domain.model.Product
 import com.cryptodrop.domain.model.ProductStatus
 import com.cryptodrop.domain.repository.CategoryRepository
 import com.cryptodrop.domain.repository.ProductRepository
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
