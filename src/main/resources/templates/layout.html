@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <meta name="theme-color" content="#10b981">
-    <title th:text="${title ?: 'Marketplace MVP'}">Marketplace MVP</title>
+    <meta name="theme-color" content="#005BFF">
+    <title th:text="${title ?: 'Marketplace'}">Marketplace</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'primary-green': '#10b981',
-                        'primary-green-dark': '#059669',
-                        'primary-green-light': '#34d399',
-                        'secondary-green': '#6ee7b7',
-                        'accent-green': '#a7f3d0',
-                        'background-green': '#ecfdf5',
+                        'primary': '#005BFF',
+                        'primary-dark': '#0047CC',
+                        'primary-light': '#3385FF',
+                        'accent': '#FF6B35',
+                        'accent-light': '#FF8C66',
                     }
                 }
             }
@@ -26,53 +25,47 @@
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body>
+<body class="bg-gray-50" th:fragment="layout (title, content)">
     <!-- Navigation -->
-    <nav class="bg-white shadow-md sticky top-0 z-50">
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16 md:h-20">
+            <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
                 <div class="flex items-center">
-                    <a th:href="@{/}" class="text-2xl md:text-3xl font-bold gradient-primary bg-clip-text text-transparent">
+                    <a th:href="@{/}" class="text-2xl font-bold text-primary hover:text-primary-dark transition-colors">
                         🛒 Marketplace
                     </a>
                 </div>
 
                 <!-- Desktop Menu -->
-                <div class="hidden md:flex md:items-center md:space-x-1 lg:space-x-4">
-                    <a th:href="@{/}" class="px-3 py-2 rounded-lg text-sm lg:text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary-green-dark transition-colors">
-                        Home
-                    </a>
-                    <a th:href="@{/products}" class="px-3 py-2 rounded-lg text-sm lg:text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary-green-dark transition-colors">
-                        Products
-                    </a>
-                    <a th:if="${currentUser != null}" th:href="@{/orders}" class="px-3 py-2 rounded-lg text-sm lg:text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary-green-dark transition-colors">
-                        Orders
-                    </a>
-                    <a th:if="${currentUser != null && (currentUser.roles.contains('ROLE_SELLER') || currentUser.roles.contains('ROLE_ADMIN'))}" th:href="@{/seller/products}" class="px-3 py-2 rounded-lg text-sm lg:text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary-green-dark transition-colors">
-                        Seller
-                    </a>
-                    <a th:if="${currentUser != null && currentUser.roles.contains('ROLE_ADMIN')}" th:href="@{/admin}" class="px-3 py-2 rounded-lg text-sm lg:text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary-green-dark transition-colors">
-                        Admin
-                    </a>
+                <div class="hidden md:flex md:items-center md:space-x-6">
+                    <a th:href="@{/}" class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Главная</a>
+                    <a th:href="@{/products}" class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Каталог</a>
+                    <a th:if="${currentUser != null}" th:href="@{/orders}" class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Заказы</a>
+                    <a th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.model.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.model.UserRole).ADMIN))}" 
+                       th:href="@{/seller/products}" 
+                       class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Продавцу</a>
+                    <a th:if="${currentUser != null and currentUser.roles.contains(T(com.cryptodrop.model.UserRole).ADMIN)}" 
+                       th:href="@{/admin}" 
+                       class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Админ</a>
                 </div>
 
                 <!-- User Actions -->
-                <div class="flex items-center space-x-2 md:space-x-4">
+                <div class="flex items-center space-x-4">
                     <div th:if="${currentUser == null}">
-                        <a th:href="@{/oauth2/authorization/keycloak}" class="btn-primary text-sm md:text-base px-4 md:px-6 py-2">
-                            Login
+                        <a th:href="@{/login}" class="bg-primary text-white px-5 py-2 rounded-lg font-medium text-sm hover:bg-primary-dark transition-colors shadow-sm">
+                            Войти
                         </a>
                     </div>
-                    <div th:if="${currentUser != null}" class="flex items-center space-x-2 md:space-x-4">
-                        <span class="hidden sm:inline text-sm md:text-base text-gray-700 font-medium" th:text="${currentUser.username}">User</span>
-                        <a th:href="@{/logout}" class="text-sm md:text-base px-3 md:px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors">
-                            Logout
+                    <div th:if="${currentUser != null}" class="flex items-center space-x-4">
+                        <span class="hidden sm:inline text-sm text-gray-700 font-medium" th:text="${currentUser.username}">User</span>
+                        <a th:href="@{/logout}" class="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+                            Выйти
                         </a>
                     </div>
                     
                     <!-- Mobile Menu Button -->
-                    <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg text-gray-700 hover:bg-green-50 focus:outline-none">
+                    <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 focus:outline-none">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
@@ -81,60 +74,59 @@
             </div>
 
             <!-- Mobile Menu -->
-            <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-200 mt-2">
+            <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-200">
                 <div class="flex flex-col space-y-2 pt-4">
-                    <a th:href="@{/}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary-green-dark transition-colors">
-                        Home
-                    </a>
-                    <a th:href="@{/products}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary-green-dark transition-colors">
-                        Products
-                    </a>
-                    <a th:if="${currentUser != null}" th:href="@{/orders}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary-green-dark transition-colors">
-                        Orders
-                    </a>
-                    <a th:if="${currentUser != null && (currentUser.roles.contains('ROLE_SELLER') || currentUser.roles.contains('ROLE_ADMIN'))}" th:href="@{/seller/products}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary-green-dark transition-colors">
-                        Seller Panel
-                    </a>
-                    <a th:if="${currentUser != null && currentUser.roles.contains('ROLE_ADMIN')}" th:href="@{/admin}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-green-50 hover:text-primary-green-dark transition-colors">
-                        Admin Panel
-                    </a>
+                    <a th:href="@{/}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Главная</a>
+                    <a th:href="@{/products}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Каталог</a>
+                    <a th:if="${currentUser != null}" th:href="@{/orders}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Заказы</a>
+                    <a th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.model.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.model.UserRole).ADMIN))}" 
+                       th:href="@{/seller/products}" 
+                       class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Продавцу</a>
+                    <a th:if="${currentUser != null and currentUser.roles.contains(T(com.cryptodrop.model.UserRole).ADMIN)}" 
+                       th:href="@{/admin}" 
+                       class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Админ</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main>
+    <main class="min-h-screen">
         <div th:replace="${content}"></div>
     </main>
 
-    <footer class="gradient-primary text-white mt-12">
-        <div class="max-w-7xl mx-auto py-8 md:py-12 px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <footer class="bg-gray-900 text-white mt-16">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
                     <h3 class="text-lg font-bold mb-4">Marketplace</h3>
-                    <p class="text-green-50 text-sm">Your trusted marketplace for quality products from around the world.</p>
+                    <p class="text-gray-400 text-sm">Ваш надежный маркетплейс для качественных товаров со всего мира.</p>
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold mb-4">Quick Links</h3>
-                    <ul class="space-y-2 text-sm">
-                        <li><a th:href="@{/products}" class="text-green-50 hover:text-white transition-colors">Products</a></li>
-                        <li><a th:href="@{/}" class="text-green-50 hover:text-white transition-colors">About Us</a></li>
-                        <li><a th:href="@{/}" class="text-green-50 hover:text-white transition-colors">Contact</a></li>
+                    <h3 class="text-lg font-bold mb-4">Покупателям</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a th:href="@{/products}" class="hover:text-white transition-colors">Каталог</a></li>
+                        <li><a th:href="@{/}" class="hover:text-white transition-colors">О нас</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold mb-4">Follow Us</h3>
-                    <p class="text-green-50 text-sm">Stay connected with us on social media.</p>
+                    <h3 class="text-lg font-bold mb-4">Продавцам</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a th:href="@{/seller/products}" class="hover:text-white transition-colors">Личный кабинет</a></li>
+                        <li><a th:href="@{/}" class="hover:text-white transition-colors">Как продавать</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Контакты</h3>
+                    <p class="text-gray-400 text-sm">support@marketplace.com</p>
                 </div>
             </div>
-            <div class="border-t border-green-400 mt-8 pt-6 text-center text-sm text-green-50">
-                <p>&copy; 2024 Marketplace MVP. All rights reserved.</p>
+            <div class="border-t border-gray-800 mt-8 pt-6 text-center text-sm text-gray-400">
+                <p>&copy; 2024 Marketplace. Все права защищены.</p>
             </div>
         </div>
     </footer>
 
     <script>
-        // Mobile menu toggle
         document.addEventListener('DOMContentLoaded', function() {
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const mobileMenu = document.getElementById('mobileMenu');
@@ -149,4 +141,3 @@
     <script th:src="@{/js/main.js}"></script>
 </body>
 </html>
-

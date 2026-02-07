@@ -1,13 +1,9 @@
 package com.cryptodrop.controller
 
-import com.cryptodrop.dto.ProductCreateDto
-import com.cryptodrop.dto.ProductUpdateDto
-import com.cryptodrop.security.KeycloakUserService
+import com.cryptodrop.service.UserService
 import com.cryptodrop.service.OrderService
 import com.cryptodrop.service.ProductService
-import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
-import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
@@ -19,7 +15,7 @@ import org.springframework.web.bind.annotation.*
 class SellerController(
     private val productService: ProductService,
     private val orderService: OrderService,
-    private val keycloakUserService: KeycloakUserService
+    private val userService: UserService
 ) {
 
     @GetMapping("/products")
@@ -28,7 +24,7 @@ class SellerController(
         @RequestParam(defaultValue = "20") size: Int,
         model: Model
     ): String {
-        val sellerId = keycloakUserService.getCurrentUserId()
+        val sellerId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
         
         val products = productService.findBySeller(sellerId, PageRequest.of(page, size))
@@ -44,7 +40,7 @@ class SellerController(
         @RequestParam(defaultValue = "20") size: Int,
         model: Model
     ): String {
-        val sellerId = keycloakUserService.getCurrentUserId()
+        val sellerId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
         
         val orders = orderService.findBySeller(sellerId, PageRequest.of(page, size))
@@ -54,4 +50,3 @@ class SellerController(
         return "seller/orders"
     }
 }
-

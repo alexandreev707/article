@@ -154,10 +154,11 @@ document.getElementById('chatInput')?.addEventListener('keypress', function(e) {
 function displayMessage(message) {
     const container = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${message.senderId === getCurrentUserId() ? 'sent' : 'received'}`;
+    messageDiv.className = `chat-message ${message.senderId === getCurrentUserId() ? 'sent' : 'received'}`;
     messageDiv.innerHTML = `
-        <strong>${message.senderName}:</strong> ${message.text}
-        <br><small>${new Date(message.timestamp).toLocaleString()}</small>
+        <div class="font-semibold mb-1">${message.senderName}</div>
+        <div>${message.text}</div>
+        <div class="text-xs opacity-75 mt-1">${new Date(message.timestamp).toLocaleString('ru-RU')}</div>
     `;
     container.appendChild(messageDiv);
     container.scrollTop = container.scrollHeight;
@@ -185,19 +186,23 @@ async function loadReviews() {
         if (response.reviews && response.reviews.length > 0) {
             response.reviews.forEach(review => {
                 const reviewDiv = document.createElement('div');
-                reviewDiv.className = 'border-b pb-4 mb-4';
+                reviewDiv.className = 'bg-gray-50 rounded-lg p-4 mb-4';
                 reviewDiv.innerHTML = `
-                    <div class="flex items-center mb-2">
-                        <strong>${review.authorName}</strong>
-                        <span class="ml-2 text-yellow-500">${'★'.repeat(review.rating)}</span>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <strong class="text-gray-900">${review.authorName}</strong>
+                            <div class="flex items-center gap-1">
+                                ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                            </div>
+                        </div>
+                        <small class="text-gray-500">${new Date(review.createdAt).toLocaleString('ru-RU')}</small>
                     </div>
                     <p class="text-gray-700">${review.comment}</p>
-                    <small class="text-gray-500">${new Date(review.createdAt).toLocaleString()}</small>
                 `;
                 container.appendChild(reviewDiv);
             });
         } else {
-            container.innerHTML = '<p class="text-gray-500">No reviews yet.</p>';
+            container.innerHTML = '<p class="text-center text-gray-500 py-8">Пока нет отзывов. Будьте первым!</p>';
         }
     } catch (error) {
         console.error('Failed to load reviews:', error);

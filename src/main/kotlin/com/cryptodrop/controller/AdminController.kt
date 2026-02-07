@@ -1,7 +1,7 @@
 package com.cryptodrop.controller
 
 import com.cryptodrop.dto.UserUpdateDto
-import com.cryptodrop.security.KeycloakUserService
+import com.cryptodrop.model.UserRole
 import com.cryptodrop.service.AdminService
 import com.cryptodrop.service.UserService
 import org.springframework.data.domain.PageRequest
@@ -16,8 +16,7 @@ import org.springframework.web.bind.annotation.*
 @PreAuthorize("hasRole('ADMIN')")
 class AdminController(
     private val adminService: AdminService,
-    private val userService: UserService,
-    private val keycloakUserService: KeycloakUserService
+    private val userService: UserService
 ) {
 
     @GetMapping
@@ -34,7 +33,10 @@ class AdminController(
         model: Model
     ): String {
         val users = when {
-            role != null -> adminService.getUsersByRole(role, PageRequest.of(page, size))
+            role != null -> {
+                val userRole = UserRole.valueOf(role.removePrefix("ROLE_").uppercase())
+                adminService.getUsersByRole(userRole, PageRequest.of(page, size))
+            }
             blocked == true -> adminService.getBlockedUsers(PageRequest.of(page, size))
             else -> adminService.getAllUsers(PageRequest.of(page, size))
         }
@@ -62,7 +64,10 @@ class AdminApiController(
         @RequestParam(required = false) blocked: Boolean?
     ): ResponseEntity<Map<String, Any>> {
         val users = when {
-            role != null -> adminService.getUsersByRole(role, PageRequest.of(page, size))
+            role != null -> {
+                val userRole = UserRole.valueOf(role.removePrefix("ROLE_").uppercase())
+                adminService.getUsersByRole(userRole, PageRequest.of(page, size))
+            }
             blocked == true -> adminService.getBlockedUsers(PageRequest.of(page, size))
             else -> adminService.getAllUsers(PageRequest.of(page, size))
         }
@@ -79,19 +84,19 @@ class AdminApiController(
         @PathVariable id: String,
         @RequestBody dto: UserUpdateDto
     ): ResponseEntity<com.cryptodrop.dto.UserResponseDto> {
-        val user = adminService.updateUser(id, dto)
+        val user = adminService.updateUser(id.toLong(), dto)
         return ResponseEntity.ok(userService.toDto(user))
     }
 
     @PostMapping("/users/{id}/block")
     fun blockUser(@PathVariable id: String): ResponseEntity<com.cryptodrop.dto.UserResponseDto> {
-        val user = adminService.blockUser(id)
+        val user = adminService.blockUser(id.toLong())
         return ResponseEntity.ok(userService.toDto(user))
     }
 
     @PostMapping("/users/{id}/unblock")
     fun unblockUser(@PathVariable id: String): ResponseEntity<com.cryptodrop.dto.UserResponseDto> {
-        val user = adminService.unblockUser(id)
+        val user = adminService.unblockUser(id.toLong())
         return ResponseEntity.ok(userService.toDto(user))
     }
 
@@ -100,7 +105,7 @@ class AdminApiController(
         @PathVariable id: String,
         @PathVariable role: String
     ): ResponseEntity<com.cryptodrop.dto.UserResponseDto> {
-        val user = adminService.grantRole(id, role)
+        val user = adminService.grantRole(id.toLong(), role)
         return ResponseEntity.ok(userService.toDto(user))
     }
 
@@ -109,8 +114,7 @@ class AdminApiController(
         @PathVariable id: String,
         @PathVariable role: String
     ): ResponseEntity<com.cryptodrop.dto.UserResponseDto> {
-        val user = adminService.revokeRole(id, role)
+        val user = adminService.revokeRole(id.toLong(), role)
         return ResponseEntity.ok(userService.toDto(user))
     }
 }
-

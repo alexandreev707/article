@@ -3,18 +3,18 @@ package com.cryptodrop.repository
 import com.cryptodrop.model.ChatMessage
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.data.mongodb.repository.MongoRepository
-import org.springframework.data.mongodb.repository.Query
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 
 @Repository
-interface ChatMessageRepository : MongoRepository<ChatMessage, String> {
-    @Query("{'\$or': [{'senderId': ?0, 'receiverId': ?1}, {'senderId': ?1, 'receiverId': ?0}]}")
-    fun findConversation(senderId: String, receiverId: String, pageable: Pageable): Page<ChatMessage>
+interface ChatMessageRepository : JpaRepository<ChatMessage, Long> {
+    @Query("SELECT m FROM ChatMessage m WHERE (m.senderId = :senderId AND m.receiverId = :receiverId) OR (m.senderId = :receiverId AND m.receiverId = :senderId) ORDER BY m.timestamp DESC")
+    fun findConversation(@Param("senderId") senderId: Long, @Param("receiverId") receiverId: Long, pageable: Pageable): Page<ChatMessage>
     
-    @Query("{'\$or': [{'senderId': ?0, 'receiverId': ?1, 'productId': ?2}, {'senderId': ?1, 'receiverId': ?0, 'productId': ?2}]}")
-    fun findConversationByProduct(senderId: String, receiverId: String, productId: String, pageable: Pageable): Page<ChatMessage>
+    @Query("SELECT m FROM ChatMessage m WHERE ((m.senderId = :senderId AND m.receiverId = :receiverId) OR (m.senderId = :receiverId AND m.receiverId = :senderId)) AND m.productId = :productId ORDER BY m.timestamp DESC")
+    fun findConversationByProduct(@Param("senderId") senderId: Long, @Param("receiverId") receiverId: Long, @Param("productId") productId: Long, pageable: Pageable): Page<ChatMessage>
     
-    fun findByReceiverIdAndReadFalse(receiverId: String): List<ChatMessage>
+    fun findByReceiverIdAndReadFalse(receiverId: Long): List<ChatMessage>
 }
-

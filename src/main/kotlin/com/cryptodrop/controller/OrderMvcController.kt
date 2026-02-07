@@ -1,6 +1,6 @@
 package com.cryptodrop.controller
 
-import com.cryptodrop.security.KeycloakUserService
+import com.cryptodrop.service.UserService
 import com.cryptodrop.service.OrderService
 import org.springframework.data.domain.PageRequest
 import org.springframework.security.access.prepost.PreAuthorize
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam
 @PreAuthorize("hasAnyRole('CUSTOMER', 'SELLER', 'ADMIN')")
 class OrderMvcController(
     private val orderService: OrderService,
-    private val keycloakUserService: KeycloakUserService
+    private val userService: UserService
 ) {
 
     @GetMapping
@@ -24,10 +24,10 @@ class OrderMvcController(
         @RequestParam(defaultValue = "20") size: Int,
         model: Model
     ): String {
-        val userId = keycloakUserService.getCurrentUserId()
+        val userId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
         
-        val isSeller = keycloakUserService.hasRole("SELLER") || keycloakUserService.hasRole("ADMIN")
+        val isSeller = userService.hasRole("SELLER") || userService.hasRole("ADMIN")
         val orders = if (isSeller) {
             orderService.findBySeller(userId, PageRequest.of(page, size))
         } else {
@@ -37,9 +37,8 @@ class OrderMvcController(
         model.addAttribute("orders", orders.map { orderService.toDto(it) })
         model.addAttribute("currentPage", page)
         model.addAttribute("totalPages", orders.totalPages)
-        model.addAttribute("currentUser", keycloakUserService.getCurrentUser())
+        model.addAttribute("currentUser", userService.getCurrentUser())
 
         return "orders/list"
     }
 }
-

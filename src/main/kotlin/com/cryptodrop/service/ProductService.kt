@@ -15,7 +15,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -29,7 +28,7 @@ class ProductService(
 
     @CacheEvict(value = ["products", "categories"], allEntries = true)
     @Transactional
-    fun createProduct(sellerId: String, dto: ProductCreateDto): Product {
+    fun createProduct(sellerId: Long, dto: ProductCreateDto): Product {
         logger.info("Creating product: ${dto.title} by seller: $sellerId")
         val product = Product(
             sellerId = sellerId,
@@ -46,7 +45,7 @@ class ProductService(
 
     @CacheEvict(value = ["products"], allEntries = true)
     @Transactional
-    fun updateProduct(productId: String, sellerId: String, dto: ProductUpdateDto): Product {
+    fun updateProduct(productId: Long, sellerId: Long, dto: ProductUpdateDto): Product {
         val product = productRepository.findById(productId)
             .orElseThrow { IllegalArgumentException("Product not found: $productId") }
         
@@ -69,7 +68,7 @@ class ProductService(
     }
 
     @Cacheable("products")
-    fun findById(productId: String): Product {
+    fun findById(productId: Long): Product {
         return productRepository.findById(productId)
             .orElseThrow { IllegalArgumentException("Product not found: $productId") }
     }
@@ -78,7 +77,7 @@ class ProductService(
         return productRepository.findAllActive(pageable)
     }
 
-    fun findBySeller(sellerId: String, pageable: Pageable): Page<Product> {
+    fun findBySeller(sellerId: Long, pageable: Pageable): Page<Product> {
         return productRepository.findBySellerId(sellerId, pageable)
     }
 
@@ -129,7 +128,7 @@ class ProductService(
             .map { it.first }
     }
 
-    fun getRecommendedProducts(userId: String?, limit: Int = 10): List<Product> {
+    fun getRecommendedProducts(userId: Long?, limit: Int = 10): List<Product> {
         val user = userId?.let { userService.findById(it) }
         val favoriteCategories = user?.favoriteProductIds?.let { productIds ->
             productRepository.findByIdIn(productIds.toList())
@@ -149,8 +148,8 @@ class ProductService(
     fun toDto(product: Product, sellerName: String? = null): ProductResponseDto {
         val seller = sellerName ?: userService.findById(product.sellerId).username
         return ProductResponseDto(
-            id = product.id!!,
-            sellerId = product.sellerId,
+            id = product.id.toString(),
+            sellerId = product.sellerId.toString(),
             sellerName = seller,
             title = product.title,
             description = product.description,
@@ -167,4 +166,3 @@ class ProductService(
         )
     }
 }
-

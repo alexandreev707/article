@@ -26,18 +26,18 @@ class ReviewService(
 
     @CacheEvict(value = ["products"], allEntries = true)
     @Transactional
-    fun createReview(authorId: String, dto: ReviewCreateDto): Review {
-        val existingReview = reviewRepository.findByProductIdAndAuthorId(dto.productId, authorId)
+    fun createReview(authorId: Long, dto: ReviewCreateDto): Review {
+        val existingReview = reviewRepository.findByProductIdAndAuthorId(dto.productId.toLong(), authorId)
         if (existingReview.isNotEmpty()) {
             throw IllegalStateException("User has already reviewed this product")
         }
 
-        val product = productRepository.findById(dto.productId)
+        val product = productRepository.findById(dto.productId.toLong())
             .orElseThrow { IllegalArgumentException("Product not found: ${dto.productId}") }
 
         val author = userService.findById(authorId)
         val review = Review(
-            productId = dto.productId,
+            productId = product.id!!,
             authorId = authorId,
             authorName = author.username,
             rating = dto.rating,
@@ -67,19 +67,19 @@ class ReviewService(
         productRepository.save(updatedProduct)
     }
 
-    fun findByProduct(productId: String, pageable: Pageable): Page<Review> {
+    fun findByProduct(productId: Long, pageable: Pageable): Page<Review> {
         return reviewRepository.findByProductId(productId, pageable)
     }
 
-    fun findByAuthor(authorId: String, pageable: Pageable): Page<Review> {
+    fun findByAuthor(authorId: Long, pageable: Pageable): Page<Review> {
         return reviewRepository.findByAuthorId(authorId, pageable)
     }
 
     fun toDto(review: Review): ReviewResponseDto {
         return ReviewResponseDto(
-            id = review.id!!,
-            productId = review.productId,
-            authorId = review.authorId,
+            id = review.id.toString(),
+            productId = review.productId.toString(),
+            authorId = review.authorId.toString(),
             authorName = review.authorName,
             rating = review.rating,
             comment = review.comment,
@@ -88,4 +88,3 @@ class ReviewService(
         )
     }
 }
-

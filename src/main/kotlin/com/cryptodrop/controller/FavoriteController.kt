@@ -1,6 +1,5 @@
 package com.cryptodrop.controller
 
-import com.cryptodrop.security.KeycloakUserService
 import com.cryptodrop.service.ProductService
 import com.cryptodrop.service.UserService
 import org.springframework.http.ResponseEntity
@@ -11,30 +10,29 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/favorites")
 class FavoriteController(
     private val userService: UserService,
-    private val productService: ProductService,
-    private val keycloakUserService: KeycloakUserService
+    private val productService: ProductService
 ) {
 
     @PostMapping("/{productId}")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     fun toggleFavorite(@PathVariable productId: String): ResponseEntity<Map<String, Any>> {
-        val userId = keycloakUserService.getCurrentUserId()
+        val userId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
         
-        val user = userService.toggleFavorite(userId, productId)
-        val isFavorite = user.favoriteProductIds.contains(productId)
+        val user = userService.toggleFavorite(userId, productId.toLong())
+        val isFavorite = user.favoriteProductIds.contains(productId.toLong())
 
         return ResponseEntity.ok(mapOf(
             "productId" to productId,
             "isFavorite" to isFavorite,
-            "favorites" to user.favoriteProductIds
+            "favorites" to user.favoriteProductIds.map { it.toString() }
         ))
     }
 
     @GetMapping
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     fun getFavorites(): ResponseEntity<Map<String, Any>> {
-        val userId = keycloakUserService.getCurrentUserId()
+        val userId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
         
         val user = userService.findById(userId)
@@ -56,4 +54,3 @@ class FavoriteController(
         ))
     }
 }
-

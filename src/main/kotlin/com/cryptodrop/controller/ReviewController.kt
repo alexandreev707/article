@@ -2,7 +2,7 @@ package com.cryptodrop.controller
 
 import com.cryptodrop.dto.ReviewCreateDto
 import com.cryptodrop.dto.ReviewResponseDto
-import com.cryptodrop.security.KeycloakUserService
+import com.cryptodrop.service.UserService
 import com.cryptodrop.service.ReviewService
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/reviews")
 class ReviewController(
     private val reviewService: ReviewService,
-    private val keycloakUserService: KeycloakUserService
+    private val userService: UserService
 ) {
 
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     fun createReview(@Valid @RequestBody dto: ReviewCreateDto): ResponseEntity<ReviewResponseDto> {
-        val authorId = keycloakUserService.getCurrentUserId()
+        val authorId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
         val review = reviewService.createReview(authorId, dto)
         return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.toDto(review))
@@ -33,7 +33,7 @@ class ReviewController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "10") size: Int
     ): ResponseEntity<Map<String, Any>> {
-        val reviews = reviewService.findByProduct(productId, PageRequest.of(page, size))
+        val reviews = reviewService.findByProduct(productId.toLong(), PageRequest.of(page, size))
         return ResponseEntity.ok(mapOf(
             "reviews" to reviews.map { reviewService.toDto(it) },
             "totalPages" to reviews.totalPages,
@@ -47,7 +47,7 @@ class ReviewController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "10") size: Int
     ): ResponseEntity<Map<String, Any>> {
-        val reviews = reviewService.findByAuthor(userId, PageRequest.of(page, size))
+        val reviews = reviewService.findByAuthor(userId.toLong(), PageRequest.of(page, size))
         return ResponseEntity.ok(mapOf(
             "reviews" to reviews.map { reviewService.toDto(it) },
             "totalPages" to reviews.totalPages,
@@ -55,4 +55,3 @@ class ReviewController(
         ))
     }
 }
-

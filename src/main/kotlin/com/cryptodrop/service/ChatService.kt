@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Service
@@ -24,11 +23,11 @@ class ChatService(
     private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
     @Transactional
-    fun sendMessage(senderId: String, dto: ChatMessageCreateDto): ChatMessage {
+    fun sendMessage(senderId: Long, dto: ChatMessageCreateDto): ChatMessage {
         val message = ChatMessage(
             senderId = senderId,
-            receiverId = dto.receiverId,
-            productId = dto.productId,
+            receiverId = dto.receiverId.toLong(),
+            productId = dto.productId?.toLong(),
             text = dto.text
         )
 
@@ -43,7 +42,7 @@ class ChatService(
         return savedMessage
     }
 
-    fun getConversation(userId1: String, userId2: String, productId: String?, pageable: Pageable): Page<ChatMessage> {
+    fun getConversation(userId1: Long, userId2: Long, productId: Long?, pageable: Pageable): Page<ChatMessage> {
         return if (productId != null) {
             chatMessageRepository.findConversationByProduct(userId1, userId2, productId, pageable)
         } else {
@@ -52,7 +51,7 @@ class ChatService(
     }
 
     @Transactional
-    fun markAsRead(messageId: String, userId: String) {
+    fun markAsRead(messageId: Long, userId: Long) {
         val message = chatMessageRepository.findById(messageId)
             .orElseThrow { IllegalArgumentException("Message not found: $messageId") }
 
@@ -62,7 +61,7 @@ class ChatService(
         }
     }
 
-    fun getUnreadMessages(userId: String): List<ChatMessage> {
+    fun getUnreadMessages(userId: Long): List<ChatMessage> {
         return chatMessageRepository.findByReceiverIdAndReadFalse(userId)
     }
 
@@ -72,12 +71,12 @@ class ChatService(
         val productTitle = message.productId?.let { productService.findById(it).title }
 
         return ChatMessageResponseDto(
-            id = message.id!!,
-            senderId = message.senderId,
+            id = message.id.toString(),
+            senderId = message.senderId.toString(),
             senderName = sender.username,
-            receiverId = message.receiverId,
+            receiverId = message.receiverId.toString(),
             receiverName = receiver.username,
-            productId = message.productId,
+            productId = message.productId?.toString(),
             productTitle = productTitle,
             text = message.text,
             timestamp = message.timestamp.format(dateFormatter),
@@ -85,4 +84,3 @@ class ChatService(
         )
     }
 }
-

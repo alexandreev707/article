@@ -2,6 +2,7 @@ package com.cryptodrop.service
 
 import com.cryptodrop.dto.UserUpdateDto
 import com.cryptodrop.model.User
+import com.cryptodrop.model.UserRole
 import com.cryptodrop.repository.UserRepository
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
@@ -21,7 +22,7 @@ class AdminService(
         return userRepository.findAll(pageable)
     }
 
-    fun getUsersByRole(role: String, pageable: Pageable): Page<User> {
+    fun getUsersByRole(role: UserRole, pageable: Pageable): Page<User> {
         val users = userRepository.findByRolesContaining(role)
         val start = pageable.offset.toInt()
         val end = (start + pageable.pageSize).coerceAtMost(users.size)
@@ -37,12 +38,16 @@ class AdminService(
 
     @CacheEvict(value = ["users"], allEntries = true)
     @Transactional
-    fun updateUser(userId: String, dto: UserUpdateDto): User {
+    fun updateUser(userId: Long, dto: UserUpdateDto): User {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found: $userId") }
 
+        val updatedRoles = dto.roles?.map { roleString ->
+            UserRole.valueOf(roleString.removePrefix("ROLE_").uppercase())
+        }?.toSet() ?: user.roles
+
         val updatedUser = user.copy(
-            roles = dto.roles ?: user.roles,
+            roles = updatedRoles,
             blocked = dto.blocked ?: user.blocked,
             updatedAt = LocalDateTime.now()
         )
@@ -53,34 +58,35 @@ class AdminService(
 
     @CacheEvict(value = ["users"], allEntries = true)
     @Transactional
-    fun blockUser(userId: String): User {
+    fun blockUser(userId: Long): User {
         return updateUser(userId, UserUpdateDto(blocked = true))
     }
 
     @CacheEvict(value = ["users"], allEntries = true)
     @Transactional
-    fun unblockUser(userId: String): User {
+    fun unblockUser(userId: Long): User {
         return updateUser(userId, UserUpdateDto(blocked = false))
     }
 
     @CacheEvict(value = ["users"], allEntries = true)
     @Transactional
-    fun grantRole(userId: String, role: String): User {
+    fun grantRole(userId: Long, role: String): User {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found: $userId") }
 
-        val updatedRoles = user.roles.toMutableSet().apply { add(role) }
-        return updateUser(userId, UserUpdateDto(roles = updatedRoles))
+        val userRole = UserRole.valueOf(role.removePrefix("ROLE_").uppercase())
+        val updatedRoles = user.roles.toMutableSet().apply { add(userRole) }
+        return updateUser(userId, UserUpdateDto(roles = updatedRoles.map { "ROLE_${it.name}" }.toSet()))
     }
 
     @CacheEvict(value = ["users"], allEntries = true)
     @Transactional
-    fun revokeRole(userId: String, role: String): User {
+    fun revokeRole(userId: Long, role: String): User {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found: $userId") }
 
-        val updatedRoles = user.roles.toMutableSet().apply { remove(role) }
-        return updateUser(userId, UserUpdateDto(roles = updatedRoles))
+        val userRole = UserRole.valueOf(role.removePrefix("ROLE_").uppercase())
+        val updatedRoles = user.roles.toMutableSet().apply { remove(userRole) }
+        return updateUser(userId, UserUpdateDto(roles = updatedRoles.map { "ROLE_${it.name}" }.toSet()))
     }
 }
-

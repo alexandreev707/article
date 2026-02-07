@@ -1,15 +1,15 @@
 package com.cryptodrop.repository
 
 import com.cryptodrop.model.User
-import org.springframework.data.mongodb.repository.MongoRepository
+import com.cryptodrop.model.UserRole
+import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.Optional
 
 @Repository
-interface UserRepository : MongoRepository<User, String> {
-    fun findByKeycloakId(keycloakId: String): Optional<User>
+interface UserRepository : JpaRepository<User, Long> {
     fun findByEmail(email: String): Optional<User>
-    fun findByRolesContaining(role: String): List<User>
+    fun findByUsername(username: String): Optional<User>
+    fun findByRolesContaining(role: UserRole): List<User>
     fun findByBlocked(blocked: Boolean): List<User>
 }
-

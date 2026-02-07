@@ -1,19 +1,31 @@
 package com.cryptodrop.model
 
-import org.springframework.data.annotation.Id
-import org.springframework.data.mongodb.core.mapping.Document
+import jakarta.persistence.*
 import java.time.LocalDateTime
 
-@Document(collection = "reviews")
+@Entity
+@Table(name = "reviews")
 data class Review(
     @Id
-    val id: String? = null,
-    val productId: String,
-    val authorId: String,
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
+    
+    @Column(nullable = false)
+    val productId: Long,
+    
+    @Column(nullable = false)
+    val authorId: Long,
+    
+    @Column(nullable = false)
     val authorName: String,
+    
+    @Column(nullable = false)
     val rating: Int, // 1-5
-    val comment: String,
+    
+    @Column(columnDefinition = "TEXT")
+    val comment: String = "",
+    
     val createdAt: LocalDateTime = LocalDateTime.now(),
+    
     val updatedAt: LocalDateTime = LocalDateTime.now()
 )
-

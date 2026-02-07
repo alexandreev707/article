@@ -3,7 +3,7 @@ package com.cryptodrop.controller
 import com.cryptodrop.dto.ProductCreateDto
 import com.cryptodrop.dto.ProductFilterDto
 import com.cryptodrop.dto.ProductUpdateDto
-import com.cryptodrop.security.KeycloakUserService
+import com.cryptodrop.service.UserService
 import com.cryptodrop.service.ProductService
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
@@ -12,14 +12,13 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
-import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.*
 
 @Controller
 @RequestMapping("/products")
 class ProductController(
     private val productService: ProductService,
-    private val keycloakUserService: KeycloakUserService
+    private val userService: UserService
 ) {
 
     @GetMapping
@@ -44,16 +43,16 @@ class ProductController(
         model.addAttribute("filter", filter)
         model.addAttribute("currentPage", page)
         model.addAttribute("totalPages", products.totalPages)
-        model.addAttribute("currentUser", keycloakUserService.getCurrentUser())
+        model.addAttribute("currentUser", userService.getCurrentUser())
 
         return "products/list"
     }
 
     @GetMapping("/{id}")
     fun viewProduct(@PathVariable id: String, model: Model): String {
-        val product = productService.findById(id)
+        val product = productService.findById(id.toLong())
         model.addAttribute("product", productService.toDto(product))
-        model.addAttribute("currentUser", keycloakUserService.getCurrentUser())
+        model.addAttribute("currentUser", userService.getCurrentUser())
         return "products/detail"
     }
 }
@@ -62,7 +61,7 @@ class ProductController(
 @RequestMapping("/api/products")
 class ProductApiController(
     private val productService: ProductService,
-    private val keycloakUserService: KeycloakUserService
+    private val userService: UserService
 ) {
 
     @GetMapping
@@ -90,14 +89,14 @@ class ProductApiController(
 
     @GetMapping("/{id}")
     fun getProduct(@PathVariable id: String): ResponseEntity<com.cryptodrop.dto.ProductResponseDto> {
-        val product = productService.findById(id)
+        val product = productService.findById(id.toLong())
         return ResponseEntity.ok(productService.toDto(product))
     }
 
     @PostMapping
     @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
     fun createProduct(@Valid @RequestBody dto: ProductCreateDto): ResponseEntity<com.cryptodrop.dto.ProductResponseDto> {
-        val sellerId = keycloakUserService.getCurrentUserId()
+        val sellerId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
         val product = productService.createProduct(sellerId, dto)
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.toDto(product))
@@ -109,15 +108,15 @@ class ProductApiController(
         @PathVariable id: String,
         @Valid @RequestBody dto: ProductUpdateDto
     ): ResponseEntity<com.cryptodrop.dto.ProductResponseDto> {
-        val sellerId = keycloakUserService.getCurrentUserId()
+        val sellerId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
-        val product = productService.updateProduct(id, sellerId, dto)
+        val product = productService.updateProduct(id.toLong(), sellerId, dto)
         return ResponseEntity.ok(productService.toDto(product))
     }
 
     @GetMapping("/recommended")
     fun getRecommended(): ResponseEntity<List<com.cryptodrop.dto.ProductResponseDto>> {
-        val userId = keycloakUserService.getCurrentUserId()
+        val userId = userService.getCurrentUserId()
         val products = productService.getRecommendedProducts(userId, 10)
         return ResponseEntity.ok(products.map { productService.toDto(it) })
     }
@@ -127,4 +126,3 @@ class ProductApiController(
         return ResponseEntity.ok(productService.getPopularCategories(20))
     }
 }
-

@@ -1,78 +1,70 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(title='Users Management', content=~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(title='Управление пользователями', content=~{::content})}">
 <body>
     <div th:fragment="content">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 text-primary-green-dark">Users Management</h1>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 class="text-3xl font-bold mb-8 text-gray-900">Управление пользователями</h1>
 
-            <div class="card overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="gradient-soft">
-                            <tr>
-                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">ID</th>
-                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
-                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Username</th>
-                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Roles</th>
-                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
-                                <th class="px-4 md:px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr th:each="user : ${users}" class="hover:bg-green-50 transition-colors">
-                                <td class="px-4 md:px-6 py-4 text-sm text-gray-900 font-mono" th:text="${#strings.substring(user.id, 0, 8) + '...'}">ID</td>
-                                <td class="px-4 md:px-6 py-4 text-sm text-gray-900" th:text="${user.email}">Email</td>
-                                <td class="px-4 md:px-6 py-4 text-sm text-gray-900 font-medium" th:text="${user.username}">Username</td>
-                                <td class="px-4 md:px-6 py-4">
-                                    <div class="flex flex-wrap gap-1">
-                                        <span th:each="role : ${user.roles}" 
-                                              class="badge badge-info text-xs"
-                                              th:text="${role}">ROLE</span>
-                                    </div>
-                                </td>
-                                <td class="px-4 md:px-6 py-4 whitespace-nowrap">
-                                    <span th:if="${user.blocked}" 
-                                          class="badge badge-danger">
-                                        Blocked
-                                    </span>
-                                    <span th:unless="${user.blocked}" 
-                                          class="badge badge-success">
-                                        Active
-                                    </span>
-                                </td>
-                                <td class="px-4 md:px-6 py-4">
-                                    <div class="flex flex-wrap gap-2">
-                                        <button th:if="${!user.blocked}" 
-                                                th:onclick="'blockUser(\'' + ${user.id} + '\')'"
-                                                class="text-xs md:text-sm px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors">
-                                            Block
-                                        </button>
-                                        <button th:if="${user.blocked}" 
-                                                th:onclick="'unblockUser(\'' + ${user.id} + '\')'"
-                                                class="text-xs md:text-sm px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors">
-                                            Unblock
-                                        </button>
-                                        <button th:onclick="'grantRole(\'' + ${user.id} + '\', \'ROLE_SELLER\')'"
-                                                class="text-xs md:text-sm px-3 py-1 bg-primary-green hover:bg-primary-green-dark text-white rounded-lg transition-colors">
-                                            Grant Seller
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Имя</th>
+                            <th>Роли</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="user : ${users}">
+                            <td class="font-mono text-xs" th:text="${#strings.substring(user.id, 0, 8) + '...'}">ID</td>
+                            <td th:text="${user.email}">Email</td>
+                            <td class="font-medium" th:text="${user.username}">Username</td>
+                            <td>
+                                <div class="flex flex-wrap gap-1">
+                                    <span th:each="role : ${user.roles}" 
+                                          class="badge badge-info text-xs"
+                                          th:text="'ROLE_' + ${role.name()}">ROLE</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span th:if="${user.blocked}" class="badge badge-danger">Заблокирован</span>
+                                <span th:unless="${user.blocked}" class="badge badge-success">Активен</span>
+                            </td>
+                            <td>
+                                <div class="flex flex-wrap gap-2">
+                                    <button th:if="${!user.blocked}" 
+                                            th:onclick="'blockUser(\'' + ${user.id} + '\')'"
+                                            class="text-xs px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded transition-colors">
+                                        Заблокировать
+                                    </button>
+                                    <button th:if="${user.blocked}" 
+                                            th:onclick="'unblockUser(\'' + ${user.id} + '\')'"
+                                            class="text-xs px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded transition-colors">
+                                        Разблокировать
+                                    </button>
+                                    <button th:onclick="'grantRole(\'' + ${user.id} + '\', \'ROLE_SELLER\')'"
+                                            class="text-xs px-3 py-1 bg-primary hover:bg-primary-dark text-white rounded transition-colors">
+                                        Сделать продавцом
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <!-- Pagination -->
-            <div class="mt-8 md:mt-12 flex flex-col sm:flex-row justify-center items-center gap-4" th:if="${totalPages > 1}">
+            <div class="mt-8 flex justify-center items-center gap-4" th:if="${totalPages > 1}">
                 <a th:if="${currentPage > 0}" 
                    th:href="@{/admin/users(page=${currentPage - 1})}"
-                   class="btn-primary text-center min-w-[120px]">← Previous</a>
-                <span class="text-gray-700 font-medium px-4" th:text="'Page ' + (${currentPage} + 1) + ' of ' + ${totalPages}">Page 1 of 1</span>
+                   class="btn-secondary px-6 py-2">← Назад</a>
+                <span class="text-gray-600 font-medium" th:text="'Страница ' + (${currentPage} + 1) + ' из ' + ${totalPages}">Страница 1 из 1</span>
                 <a th:if="${currentPage < totalPages - 1}" 
                    th:href="@{/admin/users(page=${currentPage + 1})}"
-                   class="btn-primary text-center min-w-[120px]">Next →</a>
+                   class="btn-secondary px-6 py-2">Вперед →</a>
             </div>
         </div>
 

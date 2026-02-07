@@ -1,22 +1,38 @@
 package com.cryptodrop.model
 
-import org.springframework.data.annotation.Id
-import org.springframework.data.mongodb.core.mapping.Document
+import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-@Document(collection = "orders")
+@Entity
+@Table(name = "orders")
 data class Order(
     @Id
-    val id: String? = null,
-    val buyerId: String,
-    val sellerId: String,
-    val productId: String,
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
+    
+    @Column(nullable = false)
+    val buyerId: Long,
+    
+    @Column(nullable = false)
+    val sellerId: Long,
+    
+    @Column(nullable = false)
+    val productId: Long,
+    
     val quantity: Int = 1,
+    
+    @Column(nullable = false, precision = 19, scale = 2)
     val totalPrice: BigDecimal,
+    
+    @Enumerated(EnumType.STRING)
     val status: OrderStatus = OrderStatus.PENDING,
+    
+    @Embedded
     val shippingAddress: Address,
+    
     val createdAt: LocalDateTime = LocalDateTime.now(),
+    
     val updatedAt: LocalDateTime = LocalDateTime.now()
 )
 
@@ -28,6 +44,7 @@ enum class OrderStatus {
     CANCELLED
 }
 
+@Embeddable
 data class Address(
     val street: String,
     val city: String,
@@ -35,4 +52,3 @@ data class Address(
     val zipCode: String,
     val country: String
 )
-

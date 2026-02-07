@@ -1,60 +1,85 @@
 package com.cryptodrop.config
 
-import org.keycloak.adapters.springsecurity.KeycloakConfiguration
-import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider
-import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
+import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper
-import org.springframework.security.core.session.SessionRegistryImpl
-import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy
-import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
+import org.springframework.security.core.userdetails.User
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.provisioning.InMemoryUserDetailsManager
+import org.springframework.security.web.SecurityFilterChain
 
-@KeycloakConfiguration
+@Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-class SecurityConfig : KeycloakWebSecurityConfigurerAdapter() {
+class SecurityConfig {
 
-    @Autowired
-    fun configureGlobal(auth: AuthenticationManagerBuilder) {
-        val keycloakAuthenticationProvider = KeycloakAuthenticationProvider()
-        keycloakAuthenticationProvider.setGrantedAuthoritiesMapper(SimpleAuthorityMapper())
-        auth.authenticationProvider(keycloakAuthenticationProvider)
+    @Bean
+    fun passwordEncoder(): PasswordEncoder {
+        return BCryptPasswordEncoder()
     }
 
     @Bean
-    override fun sessionAuthenticationStrategy(): SessionAuthenticationStrategy {
-        return RegisterSessionAuthenticationStrategy(SessionRegistryImpl())
+    fun userDetailsService(): UserDetailsService {
+        val passwordEncoder = passwordEncoder()
+
+        val customer = User.withUsername("customer")
+            .password(passwordEncoder.encode("password"))
+            .roles("CUSTOMER")
+            .build()
+
+        val seller = User.withUsername("seller")
+            .password(passwordEncoder.encode("password"))
+            .roles("SELLER", "CUSTOMER")
+            .build()
+
+        val admin = User.withUsername("admin")
+            .password(passwordEncoder.encode("password"))
+            .roles("ADMIN", "SELLER", "CUSTOMER")
+            .build()
+
+        return InMemoryUserDetailsManager(customer, seller, admin)
     }
 
-    override fun configure(http: HttpSecurity) {
-        super.configure(http)
+    @Bean
+    fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
+            .csrf { it.disable() }
             .authorizeHttpRequests { requests ->
                 requests
-                    .requestMatchers("/", "/products/**", "/api/products/**", "/static/**", "/css/**", "/js/**", "/images/**").permitAll()
-                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                    .requestMatchers("/admin/**").hasRole("ADMIN")
+                    // ✅ СТАТИЧЕСКИЕ РЕСУРСЫ ПЕРВЫМИ - обязательно!
+                    .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**").permitAll()
+                    .requestMatchers("/products/**", "/api/products/**").permitAll()
+                    .requestMatchers("/", "/login", "/logout", "/error", "/h2-console/**").permitAll()
+
+                    // ✅ Роли после публичных ресурсов
+                    .requestMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
                     .requestMatchers("/api/seller/**", "/seller/**").hasAnyRole("SELLER", "ADMIN")
-                    .requestMatchers("/api/orders/**", "/orders/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
-                    .requestMatchers("/api/favorites/**").hasAnyRole("CUSTOMER", "ADMIN")
                     .anyRequest().authenticated()
             }
-            .csrf { csrf ->
-                csrf
-                    .ignoringRequestMatchers("/api/**", "/ws/**")
+            .formLogin { form ->
+                form
+                    .loginPage("/login")
+                    .loginProcessingUrl("/login")
+                    .defaultSuccessUrl("/", true)
+                    .failureUrl("/login?error")
+                    .permitAll()
             }
             .logout { logout ->
-                logout
-                    .logoutUrl("/logout")
-                    .logoutSuccessUrl("/")
-                    .invalidateHttpSession(true)
-                    .deleteCookies("JSESSIONID")
+                logout.logoutUrl("/logout")
+                    .logoutSuccessUrl("/login?logout")
+                    .permitAll()
             }
+            .headers { headers ->
+                headers.frameOptions { it.sameOrigin() }
+            }
+        return http.build()
     }
-}
 
+
+
+}

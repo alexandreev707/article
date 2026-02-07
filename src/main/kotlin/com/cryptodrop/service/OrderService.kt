@@ -28,8 +28,8 @@ class OrderService(
     private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
     @Transactional
-    fun createOrder(buyerId: String, dto: OrderCreateDto): Order {
-        val product = productRepository.findById(dto.productId)
+    fun createOrder(buyerId: Long, dto: OrderCreateDto): Order {
+        val product = productRepository.findById(dto.productId.toLong())
             .orElseThrow { IllegalArgumentException("Product not found: ${dto.productId}") }
 
         if (!product.active) {
@@ -52,7 +52,7 @@ class OrderService(
         val order = Order(
             buyerId = buyerId,
             sellerId = product.sellerId,
-            productId = dto.productId,
+            productId = product.id!!,
             quantity = dto.quantity,
             totalPrice = totalPrice,
             shippingAddress = address
@@ -70,7 +70,7 @@ class OrderService(
     }
 
     @Transactional
-    fun updateOrderStatus(orderId: String, sellerId: String, dto: OrderStatusUpdateDto): Order {
+    fun updateOrderStatus(orderId: Long, sellerId: Long, dto: OrderStatusUpdateDto): Order {
         val order = orderRepository.findById(orderId)
             .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
 
@@ -87,15 +87,15 @@ class OrderService(
         return orderRepository.save(updatedOrder)
     }
 
-    fun findByBuyer(buyerId: String, pageable: Pageable): Page<Order> {
+    fun findByBuyer(buyerId: Long, pageable: Pageable): Page<Order> {
         return orderRepository.findByBuyerId(buyerId, pageable)
     }
 
-    fun findBySeller(sellerId: String, pageable: Pageable): Page<Order> {
+    fun findBySeller(sellerId: Long, pageable: Pageable): Page<Order> {
         return orderRepository.findBySellerId(sellerId, pageable)
     }
 
-    fun findById(orderId: String): Order {
+    fun findById(orderId: Long): Order {
         return orderRepository.findById(orderId)
             .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
     }
@@ -103,10 +103,10 @@ class OrderService(
     fun toDto(order: Order, productTitle: String? = null): OrderResponseDto {
         val product = productTitle ?: productService.findById(order.productId).title
         return OrderResponseDto(
-            id = order.id!!,
-            buyerId = order.buyerId,
-            sellerId = order.sellerId,
-            productId = order.productId,
+            id = order.id.toString(),
+            buyerId = order.buyerId.toString(),
+            sellerId = order.sellerId.toString(),
+            productId = order.productId.toString(),
             productTitle = product,
             quantity = order.quantity,
             totalPrice = order.totalPrice,
@@ -123,4 +123,3 @@ class OrderService(
         )
     }
 }
-
