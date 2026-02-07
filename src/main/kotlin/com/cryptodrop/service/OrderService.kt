@@ -1,222 +1,126 @@
 package com.cryptodrop.service
 
-import com.cryptodrop.domain.model.Order
-import com.cryptodrop.domain.model.OrderStatus
-import com.cryptodrop.domain.repository.OrderRepository
-import com.cryptodrop.domain.repository.ProductRepository
-import com.cryptodrop.integration.solana.SolanaService
-import io.github.oshai.kotlinlogging.KotlinLogging
+import com.cryptodrop.dto.AddressDto
+import com.cryptodrop.dto.OrderCreateDto
+import com.cryptodrop.dto.OrderResponseDto
+import com.cryptodrop.dto.OrderStatusUpdateDto
+import com.cryptodrop.model.Address
+import com.cryptodrop.model.Order
+import com.cryptodrop.model.OrderStatus
+import com.cryptodrop.repository.OrderRepository
+import com.cryptodrop.repository.ProductRepository
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
-import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
-import java.time.Instant
-
-private val logger = KotlinLogging.logger {}
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Service
-@Transactional
 class OrderService(
     private val orderRepository: OrderRepository,
     private val productRepository: ProductRepository,
-    private val solanaService: SolanaService,
-    private val kafkaTemplate: KafkaTemplate<String, String>
+    private val productService: ProductService
 ) {
-    
-    fun createOrder(
-        productId: Long,
-        buyerWallet: String,
-        shippingCountry: String?,
-        shippingAddress: String?
-    ): Order {
-        val product = productRepository.findById(productId)
-            .orElseThrow { IllegalArgumentException("Product not found: $productId") }
-        
-        val shippingCost = calculateShippingCost(product.shippingProfiles, shippingCountry)
-        val totalAmount = product.priceUsd.add(shippingCost)
-        
+    private val logger = LoggerFactory.getLogger(javaClass)
+    private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+
+    @Transactional
+    fun createOrder(buyerId: String, dto: OrderCreateDto): Order {
+        val product = productRepository.findById(dto.productId)
+            .orElseThrow { IllegalArgumentException("Product not found: ${dto.productId}") }
+
+        if (!product.active) {
+            throw IllegalStateException("Product is not available")
+        }
+
+        if (product.stock < dto.quantity) {
+            throw IllegalStateException("Insufficient stock")
+        }
+
+        val totalPrice = product.price.multiply(BigDecimal.valueOf(dto.quantity.toLong()))
+        val address = Address(
+            street = dto.shippingAddress.street,
+            city = dto.shippingAddress.city,
+            state = dto.shippingAddress.state,
+            zipCode = dto.shippingAddress.zipCode,
+            country = dto.shippingAddress.country
+        )
+
         val order = Order(
-            productId = productId,
-            buyerWallet = buyerWallet,
-            sellerWallet = product.sellerWallet,
-            amountUsdc = totalAmount,
-            shippingCountry = shippingCountry,
-            shippingAddress = shippingAddress,
-            shippingCostUsd = shippingCost,
-            status = OrderStatus.PENDING_PAYMENT
+            buyerId = buyerId,
+            sellerId = product.sellerId,
+            productId = dto.productId,
+            quantity = dto.quantity,
+            totalPrice = totalPrice,
+            shippingAddress = address
         )
-        
-        val savedOrder = orderRepository.save(order)
-        
-        // Create escrow on Solana
-        try {
-            val escrowResult = solanaService.createEscrow(
-                buyerWallet = buyerWallet,
-                sellerWallet = product.sellerWallet,
-                amount = totalAmount,
-                orderId = savedOrder.id
-            )
-            
-            val updatedOrder = savedOrder.copy(
-                solanaEscrow = escrowResult.escrowAddress,
-                solanaTxId = escrowResult.txSignature
-            )
-            val finalOrder = orderRepository.save(updatedOrder)
-            
-            // Publish event
-            kafkaTemplate.send("order-events", """
-                {
-                    "event": "order.created",
-                    "orderId": ${finalOrder.id},
-                    "buyerWallet": "${finalOrder.buyerWallet}",
-                    "sellerWallet": "${finalOrder.sellerWallet}",
-                    "amount": "${finalOrder.amountUsdc}",
-                    "escrow": "${finalOrder.solanaEscrow}"
-                }
-            """.trimIndent())
-            
-            logger.info { "Order created: ${finalOrder.id} with escrow ${finalOrder.solanaEscrow}" }
-            return finalOrder
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to create escrow for order ${savedOrder.id}" }
-            throw RuntimeException("Failed to create escrow", e)
-        }
+
+        // Update product stock
+        val updatedProduct = product.copy(
+            stock = product.stock - dto.quantity,
+            updatedAt = LocalDateTime.now()
+        )
+        productRepository.save(updatedProduct)
+
+        logger.info("Order created: ${order.id} by buyer: $buyerId")
+        return orderRepository.save(order)
     }
-    
-    fun confirmPayment(orderId: Long, txSignature: String): Order {
+
+    @Transactional
+    fun updateOrderStatus(orderId: String, sellerId: String, dto: OrderStatusUpdateDto): Order {
         val order = orderRepository.findById(orderId)
             .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
-        
-        if (order.status != OrderStatus.PENDING_PAYMENT) {
-            throw IllegalStateException("Order is not in pending payment status")
+
+        if (order.sellerId != sellerId) {
+            throw IllegalStateException("Only order seller can update status")
         }
-        
+
         val updatedOrder = order.copy(
-            status = OrderStatus.PAID,
-            solanaTxId = txSignature
+            status = dto.status,
+            updatedAt = LocalDateTime.now()
         )
-        
-        val savedOrder = orderRepository.save(updatedOrder)
-        
-        kafkaTemplate.send("order-events", """
-            {
-                "event": "order.paid",
-                "orderId": ${savedOrder.id},
-                "txSignature": "$txSignature"
-            }
-        """.trimIndent())
-        
-        return savedOrder
+
+        logger.info("Order status updated: $orderId to ${dto.status}")
+        return orderRepository.save(updatedOrder)
     }
-    
-    fun confirmDelivery(orderId: Long, buyerWallet: String): Order {
-        val order = orderRepository.findById(orderId)
+
+    fun findByBuyer(buyerId: String, pageable: Pageable): Page<Order> {
+        return orderRepository.findByBuyerId(buyerId, pageable)
+    }
+
+    fun findBySeller(sellerId: String, pageable: Pageable): Page<Order> {
+        return orderRepository.findBySellerId(sellerId, pageable)
+    }
+
+    fun findById(orderId: String): Order {
+        return orderRepository.findById(orderId)
             .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
-        
-        if (order.buyerWallet != buyerWallet) {
-            throw IllegalArgumentException("Buyer wallet mismatch")
-        }
-        
-        if (order.status != OrderStatus.DELIVERED) {
-            throw IllegalStateException("Order is not delivered yet")
-        }
-        
-        // Execute payout via Solana
-        val payoutResult = solanaService.executePayout(
-            escrowAddress = order.solanaEscrow!!,
-            sellerWallet = order.sellerWallet,
-            amount = order.amountUsdc,
-            commissionRate = BigDecimal("0.015")
+    }
+
+    fun toDto(order: Order, productTitle: String? = null): OrderResponseDto {
+        val product = productTitle ?: productService.findById(order.productId).title
+        return OrderResponseDto(
+            id = order.id!!,
+            buyerId = order.buyerId,
+            sellerId = order.sellerId,
+            productId = order.productId,
+            productTitle = product,
+            quantity = order.quantity,
+            totalPrice = order.totalPrice,
+            status = order.status,
+            shippingAddress = AddressDto(
+                street = order.shippingAddress.street,
+                city = order.shippingAddress.city,
+                state = order.shippingAddress.state,
+                zipCode = order.shippingAddress.zipCode,
+                country = order.shippingAddress.country
+            ),
+            createdAt = order.createdAt.format(dateFormatter),
+            updatedAt = order.updatedAt.format(dateFormatter)
         )
-        
-        val updatedOrder = order.copy(
-            status = OrderStatus.COMPLETED,
-            completedAt = Instant.now()
-        )
-        
-        val savedOrder = orderRepository.save(updatedOrder)
-        
-        kafkaTemplate.send("order-events", """
-            {
-                "event": "order.completed",
-                "orderId": ${savedOrder.id},
-                "payoutTx": "${payoutResult.txSignature}"
-            }
-        """.trimIndent())
-        
-        logger.info { "Order completed: ${savedOrder.id}, payout: ${payoutResult.txSignature}" }
-        return savedOrder
-    }
-    
-    fun updateTracking(orderId: Long, trackingNumber: String) {
-        val order = orderRepository.findById(orderId)
-            .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
-        
-        val updatedOrder = order.copy(
-            trackingNumber = trackingNumber,
-            status = OrderStatus.SHIPPED,
-            shippedAt = Instant.now()
-        )
-        
-        orderRepository.save(updatedOrder)
-        
-        kafkaTemplate.send("order-events", """
-            {
-                "event": "order.shipped",
-                "orderId": $orderId,
-                "trackingNumber": "$trackingNumber"
-            }
-        """.trimIndent())
-    }
-    
-    fun markDelivered(orderId: Long) {
-        val order = orderRepository.findById(orderId)
-            .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
-        
-        val updatedOrder = order.copy(
-            status = OrderStatus.DELIVERED,
-            deliveredAt = Instant.now()
-        )
-        
-        orderRepository.save(updatedOrder)
-        
-        kafkaTemplate.send("order-events", """
-            {
-                "event": "order.delivered",
-                "orderId": $orderId
-            }
-        """.trimIndent())
-    }
-    
-    fun getOrderById(id: Long): Order? {
-        return orderRepository.findById(id).orElse(null)
-    }
-    
-    fun getBuyerOrders(buyerWallet: String, page: Int = 0, size: Int = 20): Page<Order> {
-        val pageable = PageRequest.of(page, size)
-        return orderRepository.findByBuyerWallet(buyerWallet, pageable)
-    }
-    
-    fun getSellerOrders(sellerWallet: String, page: Int = 0, size: Int = 20): Page<Order> {
-        val pageable = PageRequest.of(page, size)
-        return orderRepository.findBySellerWallet(sellerWallet, pageable)
-    }
-    
-    private fun calculateShippingCost(shippingProfiles: String?, country: String?): BigDecimal {
-        // Parse JSON and get shipping cost for country
-        // For MVP, simplified logic
-        if (country == null || shippingProfiles == null) {
-            return BigDecimal("10.00") // Default shipping
-        }
-        
-        // TODO: Parse JSON shipping profiles
-        return when (country.uppercase()) {
-            "US" -> BigDecimal("8.00")
-            "EU" -> BigDecimal("10.00")
-            "IN" -> BigDecimal("12.00")
-            else -> BigDecimal("15.00")
-        }
     }
 }
+

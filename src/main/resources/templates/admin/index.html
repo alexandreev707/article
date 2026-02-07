@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(title='Admin Panel', content=~{::content})}">
+<body>
+    <div th:fragment="content">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 md:mb-8 text-primary-green-dark">Admin Panel</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div class="card p-6 hover:shadow-xl transition-all slide-up">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full gradient-primary flex items-center justify-center text-white text-2xl mr-4">
+                            👥
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900">Users</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Manage users and permissions</p>
+                    <a th:href="@{/admin/users}" class="text-primary-green-dark hover:text-primary-green font-semibold inline-flex items-center">
+                        View Users 
+                        <span class="ml-2">→</span>
+                    </a>
+                </div>
+                
+                <div class="card p-6 hover:shadow-xl transition-all slide-up">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full gradient-primary flex items-center justify-center text-white text-2xl mr-4">
+                            📦
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900">Products</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Moderate products and content</p>
+                    <a th:href="@{/products}" class="text-primary-green-dark hover:text-primary-green font-semibold inline-flex items-center">
+                        View Products 
+                        <span class="ml-2">→</span>
+                    </a>
+                </div>
+                
+                <div class="card p-6 hover:shadow-xl transition-all slide-up">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full gradient-primary flex items-center justify-center text-white text-2xl mr-4">
+                            🛒
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900">Orders</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Monitor all orders</p>
+                    <a th:href="@{/orders}" class="text-primary-green-dark hover:text-primary-green font-semibold inline-flex items-center">
+                        View Orders 
+                        <span class="ml-2">→</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

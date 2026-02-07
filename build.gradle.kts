@@ -3,14 +3,13 @@ plugins {
     id("io.spring.dependency-management") version "1.1.4"
     kotlin("jvm") version "1.9.20"
     kotlin("plugin.spring") version "1.9.20"
-    kotlin("plugin.jpa") version "1.9.20"
 }
 
 group = "com.cryptodrop"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
@@ -18,52 +17,48 @@ repositories {
 }
 
 dependencies {
-    // Spring Boot (всё даёт Logback по умолчанию)
+    // Spring Boot
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-
+    
+    // Keycloak
+    implementation("org.keycloak:keycloak-spring-boot-starter:23.0.0")
+    implementation("org.keycloak:keycloak-spring-security-adapter:23.0.0")
+    implementation("org.keycloak:keycloak-spring-boot-starter-web:23.0.0")
+    
+    // WebSocket
+    implementation("org.webjars:sockjs-client:1.5.1")
+    implementation("org.webjars:stomp-websocket:2.3.4")
+    
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-
-    // Database
-    implementation("org.postgresql:postgresql:42.7.1")
-    implementation("org.flywaydb:flyway-core:10.6.0")
-    implementation("org.flywaydb:flyway-database-postgresql:10.6.0")  // Для PG 15
-
-    // Bitcoin (оставляем)
-    implementation("org.bitcoinj:bitcoinj-core:0.16.2")
-
+    
+    // Caching
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    
     // JSON
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-
-    // HTTP Client
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
-
-    // Kafka (обновили)
-    implementation("org.springframework.kafka:spring-kafka:3.2.5")
-
-    // Logging - ★ УБРАЛИ kotlin-logging, используем Spring Boot Logback ★
-    // private val logger = LoggerFactory.getLogger(MyClass::class.java)
-    implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
-    // Testing (обновили)
+    
+    // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
-    testImplementation("org.testcontainers:postgresql:1.21.3")
-    testImplementation("org.testcontainers:junit-jupiter:1.21.3")
+    testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.11.0")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+

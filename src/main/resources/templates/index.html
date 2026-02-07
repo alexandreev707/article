@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(title='Home', content=~{::content})}">
+<body>
+    <div th:fragment="content">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+            <!-- Hero Section -->
+            <div class="gradient-hero text-white rounded-2xl p-6 md:p-12 mb-8 md:mb-12 shadow-xl fade-in">
+                <div class="max-w-3xl">
+                    <h1 class="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6">Welcome to Marketplace</h1>
+                    <p class="text-lg md:text-xl lg:text-2xl text-green-50 mb-6 md:mb-8">Discover amazing products from sellers around the world</p>
+                    <a th:href="@{/products}" class="inline-block bg-white text-primary-green-dark px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-green-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                        Shop Now →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Popular Categories -->
+            <div class="mb-8 md:mb-12" th:if="${popularCategories != null and !popularCategories.isEmpty()}">
+                <h2 class="text-xl md:text-2xl lg:text-3xl font-bold mb-4 md:mb-6 text-primary-green-dark">Popular Categories</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+                    <a th:each="category : ${popularCategories}" 
+                       th:href="@{/products(category=${category})}"
+                       class="category-chip text-center text-sm md:text-base slide-up">
+                        <span th:text="${category}">Category</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recommended Products -->
+            <div class="mb-8 md:mb-12" th:if="${recommendedProducts != null and !recommendedProducts.isEmpty()}">
+                <h2 class="text-xl md:text-2xl lg:text-3xl font-bold mb-4 md:mb-6 text-primary-green-dark">Recommended for You</h2>
+                <div class="product-grid">
+                    <div th:each="product : ${recommendedProducts}" 
+                         class="card-product slide-up">
+                        <a th:href="@{/products/{id}(id=${product.id})}">
+                            <div class="relative overflow-hidden">
+                                <img th:if="${product.images != null and !product.images.isEmpty()}" 
+                                     th:src="${product.images[0]}" 
+                                     alt="Product image" 
+                                     class="w-full h-40 md:h-56 lg:h-64 object-cover transition-transform duration-300 hover:scale-110">
+                                <div th:unless="${product.images != null and !product.images.isEmpty()}" 
+                                     class="w-full h-40 md:h-56 lg:h-64 image-placeholder">
+                                    No Image
+                                </div>
+                                <div th:if="${product.stock == 0}" class="absolute top-2 right-2 badge badge-danger">
+                                    Out of Stock
+                                </div>
+                            </div>
+                            <div class="p-4 md:p-6">
+                                <h3 class="font-semibold text-base md:text-lg mb-2 text-gray-900 line-clamp-2" th:text="${product.title}">Product Title</h3>
+                                <p class="text-gray-600 text-sm mb-3 line-clamp-2" th:text="${product.description}">Description</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xl md:text-2xl font-bold text-primary-green-dark" th:text="'$' + ${product.price}">$0.00</span>
+                                    <div class="flex items-center space-x-1">
+                                        <span class="rating-star">★</span>
+                                        <span class="text-sm md:text-base font-medium text-gray-700" th:text="${product.rating}">0.0</span>
+                                        <span class="text-xs text-gray-500" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Products -->
+            <div>
+                <h2 class="text-xl md:text-2xl lg:text-3xl font-bold mb-4 md:mb-6 text-primary-green-dark">All Products</h2>
+                <div class="product-grid">
+                    <div th:each="product : ${products}" 
+                         class="card-product slide-up">
+                        <a th:href="@{/products/{id}(id=${product.id})}">
+                            <div class="relative overflow-hidden">
+                                <img th:if="${product.images != null and !product.images.isEmpty()}" 
+                                     th:src="${product.images[0]}" 
+                                     alt="Product image" 
+                                     class="w-full h-40 md:h-56 lg:h-64 object-cover transition-transform duration-300 hover:scale-110">
+                                <div th:unless="${product.images != null and !product.images.isEmpty()}" 
+                                     class="w-full h-40 md:h-56 lg:h-64 image-placeholder">
+                                    No Image
+                                </div>
+                                <div th:if="${product.stock == 0}" class="absolute top-2 right-2 badge badge-danger">
+                                    Out of Stock
+                                </div>
+                            </div>
+                            <div class="p-4 md:p-6">
+                                <h3 class="font-semibold text-base md:text-lg mb-2 text-gray-900 line-clamp-2" th:text="${product.title}">Product Title</h3>
+                                <p class="text-gray-600 text-sm mb-3 line-clamp-2" th:text="${product.description}">Description</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xl md:text-2xl font-bold text-primary-green-dark" th:text="'$' + ${product.price}">$0.00</span>
+                                    <div class="flex items-center space-x-1">
+                                        <span class="rating-star">★</span>
+                                        <span class="text-sm md:text-base font-medium text-gray-700" th:text="${product.rating}">0.0</span>
+                                        <span class="text-xs text-gray-500" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="mt-8 md:mt-12 flex flex-col sm:flex-row justify-center items-center gap-4" th:if="${totalPages > 1}">
+                    <a th:if="${currentPage > 0}" 
+                       th:href="@{/(page=${currentPage - 1})}"
+                       class="btn-primary text-center min-w-[120px]">← Previous</a>
+                    <span class="text-gray-700 font-medium px-4" th:text="'Page ' + (${currentPage} + 1) + ' of ' + ${totalPages}">Page 1 of 1</span>
+                    <a th:if="${currentPage < totalPages - 1}" 
+                       th:href="@{/(page=${currentPage + 1})}"
+                       class="btn-primary text-center min-w-[120px]">Next →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

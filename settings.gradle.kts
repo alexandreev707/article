@@ -1,1 +1,2 @@
-rootProject.name = "cryptodrop-marketplace"
+rootProject.name = "marketplace-mvp"
+
