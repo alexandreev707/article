@@ -1,133 +1,114 @@
-<div th:fragment="content" th:replace="~{layout :: layout(title='Marketplace', content=~{::content})}">
-    <style>
-        /* Добавляем недостающие стили для этой страницы */
-        .category-chip {
-            display: inline-flex;
-            align-items: center;
-            padding: 8px 16px;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 20px;
-            color: #1f2937;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            text-decoration: none;
-        }
-        .category-chip:hover {
-            background: #005BFF;
-            color: white;
-            border-color: #005BFF;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-            padding: 20px 0;
-        }
-        .product-card {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            border: 1px solid #e5e7eb;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        .product-card:hover {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transform: translateY(-8px);
-            border-color: #005BFF;
-        }
-        .product-card-image {
-            position: relative;
-            width: 100%;
-            height: 220px;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .btn-primary {
-            background: #005BFF;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-        .btn-primary:hover {
-            background: #0047CC;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transform: translateY(-1px);
-        }
-    </style>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <!-- Hero -->
-        <div class="text-center mb-20">
-            <h1 class="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6 leading-tight">
-                Welcome to Marketplace
-            </h1>
-            <p class="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-                Thousands of products from verified sellers
-            </p>
-            <a th:href="@{/products}" class="btn-primary text-lg px-10 py-5 inline-flex items-center gap-3 shadow-lg">
-                Go to Catalog →
-            </a>
-        </div>
-
-        <!-- Categories -->
-        <section class="mb-20">
-            <h2 class="text-3xl font-bold text-gray-900 mb-12 text-center">Popular Categories</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 justify-center max-w-5xl mx-auto">
-                <a href="#" class="category-chip p-6 text-center shadow-sm hover:shadow-md">Electronics</a>
-                <a href="#" class="category-chip p-6 text-center shadow-sm hover:shadow-md">Clothing</a>
-                <a href="#" class="category-chip p-6 text-center shadow-sm hover:shadow-md">Home</a>
-                <a href="#" class="category-chip p-6 text-center shadow-sm hover:shadow-md">Sports</a>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
+<head>
+    <title>Главная - Marketplace</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="container py-8">
+            <!-- Hero Banner -->
+            <div class="hero-section fade-in mb-12">
+                <div class="max-w-3xl">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-4">Добро пожаловать в Marketplace</h1>
+                    <p class="text-lg md:text-xl text-blue-100 mb-6">Тысячи товаров от проверенных продавцов</p>
+                    <a th:href="@{/products}" class="inline-block bg-white text-primary px-8 py-3 rounded-lg font-semibold text-base hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl">
+                        Перейти в каталог →
+                    </a>
+                </div>
             </div>
-        </section>
 
-        <!-- Recommendations -->
-        <section>
-            <h2 class="text-3xl font-bold text-gray-900 mb-12">Recommended for you</h2>
-            <div class="product-grid">
-                <div class="product-card">
-                    <div class="product-card-image">
-                        <span class="text-gray-400 text-lg font-medium">No photo</span>
-                    </div>
-                    <div class="p-6 flex-1 flex flex-col">
-                        <h3 class="font-semibold text-gray-900 mb-3 text-lg line-clamp-2">Product Title</h3>
-                        <div class="text-3xl font-bold text-blue-600 mb-4">$0.00</div>
-                        <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                            <span class="text-yellow-400 text-lg">⭐</span>
-                            <span>0.0</span>
-                            <span class="text-gray-400">(0)</span>
-                        </div>
-                        <span class="inline-flex bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-full text-sm font-medium">Out of stock</span>
+            <!-- Popular Categories -->
+            <div class="mb-12" th:if="${popularCategories != null and !popularCategories.isEmpty()}">
+                <h2 class="text-2xl font-bold mb-6 text-gray-900">Популярные категории</h2>
+                <div class="flex flex-wrap gap-3">
+                    <a th:each="category : ${popularCategories}" 
+                       th:href="@{/products(category=${category})}"
+                       class="category-chip">
+                        <span th:text="${category}">Category</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recommended Products -->
+            <div class="mb-12" th:if="${recommendedProducts != null and !recommendedProducts.isEmpty()}">
+                <h2 class="text-2xl font-bold mb-6 text-gray-900">Рекомендуем вам</h2>
+                <div class="product-grid">
+                    <div th:each="product : ${recommendedProducts}" class="product-card slide-up">
+                        <a th:href="@{/products/{id}(id=${product.id})}" class="block h-full">
+                            <div class="product-card-image">
+                                <img th:if="${product.images != null and !product.images.isEmpty()}" 
+                                     th:src="${product.images[0]}" 
+                                     alt="Product image"
+                                     onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>Нет фото</div>'">
+                                <div th:unless="${product.images != null and !product.images.isEmpty()}" 
+                                     class="image-placeholder h-full">
+                                    Нет фото
+                                </div>
+                                <div th:if="${product.stock == 0}" class="product-card-badge">Нет в наличии</div>
+                            </div>
+                            <div class="product-card-content">
+                                <h3 class="product-card-title" th:text="${product.title}">Product Title</h3>
+                                <div class="mt-auto">
+                                    <div class="product-card-price" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</div>
+                                    <div class="product-card-rating">
+                                        <span class="product-card-rating-star">★</span>
+                                        <span th:text="${#numbers.formatDecimal(product.rating, 1, 1)}">0.0</span>
+                                        <span class="text-gray-400 ml-1" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
-        </section>
+
+            <!-- All Products -->
+            <div>
+                <h2 class="text-2xl font-bold mb-6 text-gray-900">Все товары</h2>
+                <div class="product-grid" th:if="${products != null and !products.isEmpty()}">
+                    <div th:each="product : ${products}" class="product-card slide-up">
+                        <a th:href="@{/products/{id}(id=${product.id})}" class="block h-full">
+                            <div class="product-card-image">
+                                <img th:if="${product.images != null and !product.images.isEmpty()}" 
+                                     th:src="${product.images[0]}" 
+                                     alt="Product image"
+                                     onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>Нет фото</div>'">
+                                <div th:unless="${product.images != null and !product.images.isEmpty()}" 
+                                     class="image-placeholder h-full">
+                                    Нет фото
+                                </div>
+                                <div th:if="${product.stock == 0}" class="product-card-badge">Нет в наличии</div>
+                            </div>
+                            <div class="product-card-content">
+                                <h3 class="product-card-title" th:text="${product.title}">Product Title</h3>
+                                <div class="mt-auto">
+                                    <div class="product-card-price" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</div>
+                                    <div class="product-card-rating">
+                                        <span class="product-card-rating-star">★</span>
+                                        <span th:text="${#numbers.formatDecimal(product.rating, 1, 1)}">0.0</span>
+                                        <span class="text-gray-400 ml-1" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div th:if="${products == null or products.isEmpty()}" class="text-center py-12 text-gray-500">
+                    <p>Товары не найдены</p>
+                </div>
+
+                <!-- Pagination -->
+                <div class="mt-12 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
+                    <a th:if="${currentPage > 0}" 
+                       th:href="@{/(page=${currentPage - 1})}"
+                       class="btn-secondary px-6 py-2">← Назад</a>
+                    <span class="text-gray-600 font-medium" th:text="'Страница ' + (${currentPage} + 1) + ' из ' + ${totalPages}">Страница 1 из 1</span>
+                    <a th:if="${currentPage < totalPages - 1}" 
+                       th:href="@{/(page=${currentPage + 1})}"
+                       class="btn-secondary px-6 py-2">Вперед →</a>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+</body>
+</html>

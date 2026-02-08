@@ -147,11 +147,5 @@ docker-compose up -d
 - Адаптивный дизайн на Tailwind CSS
 
 
-docker run -d \
---name cryptodrop-mongo \
--p 27017:27017 \
--e MONGO_INITDB_ROOT_USERNAME=admin \
--e MONGO_INITDB_ROOT_PASSWORD=cryptodrop2026 \
--v mongo_data:/data/db \
-mongo:7.0
+
 

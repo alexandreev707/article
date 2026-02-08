@@ -38,6 +38,7 @@ class ProductController(
         val products = productService.searchProducts(filter, page, size)
         val categories = productService.getPopularCategories(20)
 
+        model.addAttribute("title", "Каталог - Marketplace")
         model.addAttribute("products", products.map { productService.toDto(it) })
         model.addAttribute("categories", categories)
         model.addAttribute("filter", filter)
@@ -51,7 +52,9 @@ class ProductController(
     @GetMapping("/{id}")
     fun viewProduct(@PathVariable id: String, model: Model): String {
         val product = productService.findById(id.toLong())
-        model.addAttribute("product", productService.toDto(product))
+        val productDto = productService.toDto(product)
+        model.addAttribute("title", "${productDto.title} - Marketplace")
+        model.addAttribute("product", productDto)
         model.addAttribute("currentUser", userService.getCurrentUser())
         return "products/detail"
     }

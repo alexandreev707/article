@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(title='Управление пользователями', content=~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
+<head>
+    <title>Управление пользователями - Marketplace</title>
+</head>
 <body>
     <div th:fragment="content">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="container py-8">
             <h1 class="text-3xl font-bold mb-8 text-gray-900">Управление пользователями</h1>
 
-            <div class="table-container">
+            <div class="table-container" th:if="${users != null and !users.isEmpty()}">
                 <table>
                     <thead>
                         <tr>
@@ -55,9 +58,13 @@
                     </tbody>
                 </table>
             </div>
+            
+            <div th:if="${users == null or users.isEmpty()}" class="text-center py-12 text-gray-500">
+                <p>Пользователи не найдены</p>
+            </div>
 
             <!-- Pagination -->
-            <div class="mt-8 flex justify-center items-center gap-4" th:if="${totalPages > 1}">
+            <div class="mt-8 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
                 <a th:if="${currentPage > 0}" 
                    th:href="@{/admin/users(page=${currentPage - 1})}"
                    class="btn-secondary px-6 py-2">← Назад</a>

@@ -34,6 +34,7 @@ class OrderMvcController(
             orderService.findByBuyer(userId, PageRequest.of(page, size))
         }
 
+        model.addAttribute("title", "Мои заказы - Marketplace")
         model.addAttribute("orders", orders.map { orderService.toDto(it) })
         model.addAttribute("currentPage", page)
         model.addAttribute("totalPages", orders.totalPages)

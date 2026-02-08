@@ -5,11 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="theme-color" content="#005BFF">
     <title th:text="${title ?: 'Marketplace'}">Marketplace</title>
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    },
                     colors: {
                         'primary': '#005BFF',
                         'primary-dark': '#0047CC',
@@ -21,14 +31,18 @@
             }
         }
     </script>
+    
+    <!-- WebSocket -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body class="bg-gray-50" th:fragment="layout (title, content)">
+<body class="bg-gray-50">
     <!-- Navigation -->
     <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="container">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
                 <div class="flex items-center">
@@ -53,7 +67,7 @@
                 <!-- User Actions -->
                 <div class="flex items-center space-x-4">
                     <div th:if="${currentUser == null}">
-                        <a th:href="@{/login}" class="bg-primary text-white px-5 py-2 rounded-lg font-medium text-sm hover:bg-primary-dark transition-colors shadow-sm">
+                        <a th:href="@{/login}" class="btn-primary">
                             Войти
                         </a>
                     </div>
@@ -90,12 +104,14 @@
         </div>
     </nav>
 
+    <!-- Main Content -->
     <main class="min-h-screen">
-        <div th:replace="${content}"></div>
+        <div th:replace="~{::content}"></div>
     </main>
 
+    <!-- Footer -->
     <footer class="bg-gray-900 text-white mt-16">
-        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="container py-12">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
                     <h3 class="text-lg font-bold mb-4">Marketplace</h3>

@@ -1,8 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(title='Каталог', content=~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
+<head>
+    <title>Каталог - Marketplace</title>
+</head>
 <body>
     <div th:fragment="content">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="container py-8">
             <h1 class="text-3xl font-bold mb-8 text-gray-900">Каталог товаров</h1>
 
             <!-- Filters -->
@@ -52,13 +55,14 @@
             </div>
 
             <!-- Products Grid -->
-            <div class="product-grid">
+            <div class="product-grid" th:if="${products != null and !products.isEmpty()}">
                 <div th:each="product : ${products}" class="product-card slide-up">
                     <a th:href="@{/products/{id}(id=${product.id})}" class="block h-full">
                         <div class="product-card-image">
                             <img th:if="${product.images != null and !product.images.isEmpty()}" 
                                  th:src="${product.images[0]}" 
-                                 alt="Product image">
+                                 alt="Product image"
+                                 onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>Нет фото</div>'">
                             <div th:unless="${product.images != null and !product.images.isEmpty()}" 
                                  class="image-placeholder h-full">
                                 Нет фото
@@ -68,10 +72,10 @@
                         <div class="product-card-content">
                             <h3 class="product-card-title" th:text="${product.title}">Product Title</h3>
                             <div class="mt-auto">
-                                <div class="product-card-price" th:text="'$' + ${product.price}">$0.00</div>
+                                <div class="product-card-price" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</div>
                                 <div class="product-card-rating">
                                     <span class="product-card-rating-star">★</span>
-                                    <span th:text="${product.rating}">0.0</span>
+                                    <span th:text="${#numbers.formatDecimal(product.rating, 1, 1)}">0.0</span>
                                     <span class="text-gray-400 ml-1" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
                                 </div>
                             </div>
@@ -79,15 +83,19 @@
                     </a>
                 </div>
             </div>
+            
+            <div th:if="${products == null or products.isEmpty()}" class="text-center py-12 text-gray-500">
+                <p>Товары не найдены</p>
+            </div>
 
             <!-- Pagination -->
-            <div class="mt-12 flex justify-center items-center gap-4" th:if="${totalPages > 1}">
+            <div class="mt-12 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
                 <a th:if="${currentPage > 0}" 
-                   th:href="@{/products(page=${currentPage - 1})}"
+                   th:href="@{/products(page=${currentPage - 1}, category=${filter?.category}, minPrice=${filter?.minPrice}, maxPrice=${filter?.maxPrice}, sortBy=${filter?.sortBy})}"
                    class="btn-secondary px-6 py-2">← Назад</a>
                 <span class="text-gray-600 font-medium" th:text="'Страница ' + (${currentPage} + 1) + ' из ' + ${totalPages}">Страница 1 из 1</span>
                 <a th:if="${currentPage < totalPages - 1}" 
-                   th:href="@{/products(page=${currentPage + 1})}"
+                   th:href="@{/products(page=${currentPage + 1}, category=${filter?.category}, minPrice=${filter?.minPrice}, maxPrice=${filter?.maxPrice}, sortBy=${filter?.sortBy})}"
                    class="btn-secondary px-6 py-2">Вперед →</a>
             </div>
         </div>

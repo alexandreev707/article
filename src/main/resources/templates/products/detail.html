@@ -1,8 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(title=${product.title}, content=~{::content})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
+<head>
+    <title th:text="${product.title + ' - Marketplace'}">Product - Marketplace</title>
+</head>
 <body>
     <div th:fragment="content">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="container py-8">
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-10">
                     <!-- Product Image -->
@@ -11,7 +14,8 @@
                             <img th:if="${product.images != null and !product.images.isEmpty()}" 
                                  th:src="${product.images[0]}" 
                                  alt="Product image" 
-                                 class="w-full h-full object-cover">
+                                 class="w-full h-full object-cover"
+                                 onerror="this.parentElement.innerHTML='<div class=\'image-placeholder w-full h-full\'>Нет фото</div>'">
                             <div th:unless="${product.images != null and !product.images.isEmpty()}" 
                                  class="image-placeholder w-full h-full">
                                 Нет фото
@@ -29,13 +33,13 @@
                         <div class="flex items-center gap-4 mb-6">
                             <div class="flex items-center gap-2">
                                 <span class="text-yellow-400 text-2xl">★</span>
-                                <span class="text-xl font-semibold" th:text="${product.rating}">0.0</span>
+                                <span class="text-xl font-semibold" th:text="${#numbers.formatDecimal(product.rating, 1, 1)}">0.0</span>
                             </div>
                             <span class="text-gray-500" th:text="'(' + ${product.reviewCount} + ' отзывов)'">(0 отзывов)</span>
                         </div>
 
                         <div class="mb-6">
-                            <div class="text-4xl font-bold text-primary mb-2" th:text="'$' + ${product.price}">$0.00</div>
+                            <div class="text-4xl font-bold text-primary mb-2" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</div>
                             <div class="text-sm text-gray-500" th:if="${product.stock > 0}" th:text="'В наличии: ' + ${product.stock} + ' шт.'">В наличии</div>
                         </div>
 
@@ -115,12 +119,12 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        const productId = /*[[${product.id}]]*/ '';
-        const sellerId = /*[[${product.sellerId}]]*/ '';
-    </script>
-    <script th:src="@{/js/product-detail.js}"></script>
+        <script>
+            const productId = /*[[${product.id}]]*/ '';
+            const sellerId = /*[[${product.sellerId}]]*/ '';
+        </script>
+        <script th:src="@{/js/product-detail.js}"></script>
+    </div>
 </body>
 </html>
