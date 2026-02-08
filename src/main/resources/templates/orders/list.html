@@ -1,41 +1,54 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#005BFF">
-    <title>Вход - Marketplace</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-                    },
-                    colors: {
-                        'primary': '#005BFF',
-                        'primary-dark': '#0047CC',
-                        'primary-light': '#3385FF',
-                        'accent': '#FF6B35',
-                    }
-                }
-            }
-        }
-    </script>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <title>Мои заказы - Marketplace</title>
 </head>
 <body>
-    <div th:fragment="content">
-        <div class="container py-8">
-            <h1 class="text-3xl font-bold mb-8 text-gray-900">Мои заказы</h1>
+<div th:fragment="content">
+    <div class="container py-8">
+        <h1 class="text-3xl font-bold mb-8 text-gray-900">Мои заказы</h1>
 
-            <div class="table-container" th:if="${orders != null and !orders.isEmpty()}">
+        <div id="ordersContainer" class="table-container">
+            <div class="text-center py-12">
+                <div class="spinner"></div>
+                <p class="text-gray-500 mt-4">Загрузка заказов...</p>
+            </div>
+        </div>
+
+        <!-- ✅ ПАГИНАЦИЯ ДОБАВЛЕНА -->
+        <div id="pagination" class="mt-8 flex justify-center items-center gap-4 hidden">
+            <button id="prevPage" class="btn-secondary px-6 py-2">← Назад</button>
+            <span id="pageInfo" class="text-gray-600 font-medium">Страница 1 из 1</span>
+            <button id="nextPage" class="btn-secondary px-6 py-2">Вперед →</button>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        const pageSize = 10;
+
+        async function loadOrders() {
+            const container = document.getElementById('ordersContainer');
+            const pagination = document.getElementById('pagination');
+
+            try {
+                const response = await fetch(`/api/orders?page=${currentPage}&size=${pageSize}`);
+                const data = await response.json();
+
+                console.log('📥 Данные:', data);
+
+                // ✅ ФИКС: Spring Page
+                const orders = data.orders?.content || data.orders || [];
+                const totalPages = data.totalPages || data.orders?.totalPages || 1;
+
+                if (orders.length === 0) {
+                    container.innerHTML = '<p class="text-center py-12 text-gray-500">У вас пока нет заказов</p>';
+                    if (pagination) pagination.classList.add('hidden');
+                    return;
+                }
+
+                // ✅ ТАБЛИЦА
+                container.innerHTML = `
                 <table>
                     <thead>
                         <tr>
@@ -48,40 +61,72 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="order : ${orders}">
-                            <td class="font-mono text-xs" th:text="${#strings.substring(order.id, 0, 8) + '...'}">ID</td>
-                            <td class="font-medium" th:text="${order.productTitle}">Product</td>
-                            <td th:text="${order.quantity}">1</td>
-                            <td class="font-bold text-primary" th:text="'$' + ${#numbers.formatDecimal(order.totalPrice, 1, 2)}">$0.00</td>
-                            <td>
-                                <span class="badge"
-                                      th:classappend="${order.status.name() == 'DELIVERED' ? 'badge-success' : 
-                                                       order.status.name() == 'CANCELLED' ? 'badge-danger' : 
-                                                       order.status.name() == 'SHIPPED' ? 'badge-info' : 
-                                                       'badge-warning'}"
-                                      th:text="${order.status}">PENDING</span>
-                            </td>
-                            <td class="text-gray-500 text-sm" th:text="${order.createdAt}">Date</td>
-                        </tr>
+                        ${orders.map(order => `
+                            <tr>
+                                <td class="font-mono text-xs">${order.id.toString().slice(0,8)}...</td>
+                                <td class="font-medium">${order.productTitle}</td>
+                                <td>${order.quantity}</td>
+                                <td class="font-bold text-primary">$${Number(order.totalPrice).toFixed(2)}</td>
+                                <td>
+                                    <span class="badge
+                                        ${order.status === 'DELIVERED' ? 'badge-success' :
+                    order.status === 'CANCELLED' ? 'badge-danger' :
+                        order.status === 'SHIPPED' ? 'badge-info' :
+                            order.status === 'CONFIRMED' ? 'badge-primary' : 'badge-warning'}">
+                                        ${order.status}
+                                    </span>
+                                </td>
+                                <td class="text-gray-500 text-sm">${new Date(order.createdAt).toLocaleDateString('ru-RU')}</td>
+                            </tr>
+                        `).join('')}
                     </tbody>
                 </table>
-            </div>
-            
-            <div th:if="${orders == null or orders.isEmpty()}" class="text-center py-12 text-gray-500">
-                <p>У вас пока нет заказов</p>
-            </div>
+            `;
 
-            <!-- Pagination -->
-            <div class="mt-8 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
-                <a th:if="${currentPage > 0}" 
-                   th:href="@{/orders(page=${currentPage - 1})}"
-                   class="btn-secondary px-6 py-2">← Назад</a>
-                <span class="text-gray-600 font-medium" th:text="'Страница ' + (${currentPage} + 1) + ' из ' + ${totalPages}">Страница 1 из 1</span>
-                <a th:if="${currentPage < totalPages - 1}" 
-                   th:href="@{/orders(page=${currentPage + 1})}"
-                   class="btn-secondary px-6 py-2">Вперед →</a>
-            </div>
-        </div>
-    </div>
+                // ✅ ПАГИНАЦИЯ (с проверкой)
+                if (pagination && document.getElementById('pageInfo')) {
+                    document.getElementById('pageInfo').textContent =
+                        `Страница ${data.currentPage + 1} из ${totalPages}`;
+
+                    const prevBtn = document.getElementById('prevPage');
+                    const nextBtn = document.getElementById('nextPage');
+
+                    if (prevBtn) prevBtn.disabled = currentPage === 0;
+                    if (nextBtn) nextBtn.disabled = currentPage >= totalPages - 1;
+
+                    pagination.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error('❌ Ошибка:', error);
+                container.innerHTML = '<p class="text-center py-12 text-red-500">Ошибка загрузки заказов</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOrders();
+
+            // ✅ ПРОВЕРКА ЭЛЕМЕНТОВ
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    if (currentPage > 0) {
+                        currentPage--;
+                        loadOrders();
+                    }
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    currentPage++;
+                    loadOrders();
+                });
+            }
+        });
+    </script>
+</div>
 </body>
 </html>

@@ -64,8 +64,9 @@
                                     class="btn-primary w-full py-3 text-lg">
                                 Купить сейчас
                             </button>
-                            <button th:if="${currentUser != null}" 
+                            <button th:if="${currentUser != null}"
                                     id="addToFavorites"
+                                    th:attr="data-favorited=${#lists.contains(currentUser.favoriteProductIds, product.id) ? 'true' : 'false'}"
                                     class="btn-secondary w-full py-3">
                                 ❤️ В избранное
                             </button>
@@ -120,9 +121,14 @@
             </div>
         </div>
 
-        <script>
-            const productId = /*[[${product.id}]]*/ '';
-            const sellerId = /*[[${product.sellerId}]]*/ '';
+        <script th:inline="javascript">
+            window.productData = {
+                id: [[${product.id}]],
+                sellerId: [[${product.sellerId}]],
+                title: [[${product.title}]]
+            };
+            window.currentUser = /*[[${currentUser}]]*/ null;
+            console.log('🔥 Thymeleaf данные:', window.productData, window.currentUser);
         </script>
         <script th:src="@{/js/product-detail.js}"></script>
     </div>

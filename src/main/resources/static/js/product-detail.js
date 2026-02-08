@@ -1,242 +1,122 @@
-// Product detail page functionality
-
-let stompClient = null;
-const productId = window.productId || '';
-const sellerId = window.sellerId || '';
-
+// src/main/resources/static/js/product-detail.js
 document.addEventListener('DOMContentLoaded', function() {
-    initializeProductDetail();
+    console.log('🚀 ProductDetail JS загружен');
+    console.log('📊 window.productData:', window.productData);
+    console.log('📊 window.currentUser:', window.currentUser);
+
+    initButtons();
 });
 
-function initializeProductDetail() {
-    // Add to favorites
-    const addToFavoritesBtn = document.getElementById('addToFavorites');
-    if (addToFavoritesBtn) {
-        addToFavoritesBtn.addEventListener('click', toggleFavorite);
-    }
+function initButtons() {
+    const buyBtn = document.getElementById('buyNow');
+    const favBtn = document.getElementById('addToFavorites');
 
-    // Buy now
-    const buyNowBtn = document.getElementById('buyNow');
-    if (buyNowBtn) {
-        buyNowBtn.addEventListener('click', buyNow);
-    }
+    console.log('🔍 buyBtn:', buyBtn);
+    console.log('🔍 favBtn:', favBtn);
+    console.log('🔍 currentUser:', window.currentUser);
 
-    // Chat with seller
-    const chatWithSellerBtn = document.getElementById('chatWithSeller');
-    if (chatWithSellerBtn) {
-        chatWithSellerBtn.addEventListener('click', openChat);
-    }
-
-    // Load reviews
-    loadReviews();
-
-    // Add review button
-    const addReviewBtn = document.getElementById('addReviewBtn');
-    if (addReviewBtn) {
-        addReviewBtn.addEventListener('click', showReviewForm);
-    }
-}
-
-async function toggleFavorite() {
-    try {
-        const response = await apiCall(`/api/favorites/${productId}`, 'POST');
-        const btn = document.getElementById('addToFavorites');
-        if (response.isFavorite) {
-            btn.textContent = '❤️ Remove from Favorites';
-            btn.classList.remove('btn-secondary');
-            btn.classList.add('bg-red-500', 'hover:bg-red-600', 'text-white');
-        } else {
-            btn.textContent = '❤️ Add to Favorites';
-            btn.classList.remove('bg-red-500', 'hover:bg-red-600', 'text-white');
-            btn.classList.add('btn-secondary');
-        }
-        showNotification(response.isFavorite ? 'Added to favorites' : 'Removed from favorites', 'success');
-    } catch (error) {
-        showNotification('Failed to update favorites', 'error');
-    }
-}
-
-function buyNow() {
-    const address = prompt('Enter shipping address:\nFormat: Street, City, State, ZIP, Country');
-    if (!address) return;
-
-    const parts = address.split(',').map(s => s.trim());
-    if (parts.length !== 5) {
-        showNotification('Invalid address format', 'error');
-        return;
-    }
-
-    const orderData = {
-        productId: productId,
-        quantity: 1,
-        shippingAddress: {
-            street: parts[0],
-            city: parts[1],
-            state: parts[2],
-            zipCode: parts[3],
-            country: parts[4]
-        }
-    };
-
-    apiCall('/api/orders', 'POST', orderData)
-        .then(() => {
-            showNotification('Order created successfully!', 'success');
-        })
-        .catch(error => {
-            showNotification('Failed to create order', 'error');
-        });
-}
-
-function openChat() {
-    const chatModal = document.getElementById('chatModal');
-    chatModal.classList.remove('hidden');
-    connectWebSocket();
-    loadChatHistory();
-}
-
-function closeChat() {
-    const chatModal = document.getElementById('chatModal');
-    chatModal.classList.add('hidden');
-    if (stompClient) {
-        stompClient.disconnect();
-        stompClient = null;
-    }
-}
-
-document.getElementById('closeChatBtn')?.addEventListener('click', closeChat);
-
-function connectWebSocket() {
-    const socket = new SockJS('/ws/chat');
-    stompClient = Stomp.over(socket);
-    
-    stompClient.connect({}, function(frame) {
-        console.log('Connected: ' + frame);
-        
-        // Subscribe to personal messages
-        const userId = getCurrentUserId(); // You'll need to implement this
-        stompClient.subscribe(`/topic/chat/${userId}`, function(message) {
-            const chatMessage = JSON.parse(message.body);
-            displayMessage(chatMessage);
-        });
-    });
-}
-
-function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const text = input.value.trim();
-    if (!text) return;
-
-    const messageData = {
-        receiverId: sellerId,
-        productId: productId,
-        text: text
-    };
-
-    if (stompClient && stompClient.connected) {
-        stompClient.send('/app/chat.send', {}, JSON.stringify(messageData));
+    // КУПИТЬ
+    if (buyBtn && window.currentUser) {
+        buyBtn.style.border = '2px solid green'; // ✅ ЗЕЛЁНАЯ РАМКА
+        buyBtn.addEventListener('click', buyNow);
+        console.log('✅ КУПИТЬ подключена');
     } else {
-        apiCall('/api/chat', 'POST', messageData)
-            .then(() => {
-                loadChatHistory();
-            });
+        console.log('❌ КУПИТЬ:', buyBtn ? 'есть' : 'НЕТ', window.currentUser ? 'есть' : 'НЕТ');
     }
 
-    input.value = '';
-}
-
-document.getElementById('sendMessageBtn')?.addEventListener('click', sendMessage);
-document.getElementById('chatInput')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        sendMessage();
-    }
-});
-
-function displayMessage(message) {
-    const container = document.getElementById('chatMessages');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `chat-message ${message.senderId === getCurrentUserId() ? 'sent' : 'received'}`;
-    messageDiv.innerHTML = `
-        <div class="font-semibold mb-1">${message.senderName}</div>
-        <div>${message.text}</div>
-        <div class="text-xs opacity-75 mt-1">${new Date(message.timestamp).toLocaleString('ru-RU')}</div>
-    `;
-    container.appendChild(messageDiv);
-    container.scrollTop = container.scrollHeight;
-}
-
-async function loadChatHistory() {
-    try {
-        const response = await apiCall(`/api/chat/conversation?userId=${sellerId}&productId=${productId}`);
-        const container = document.getElementById('chatMessages');
-        container.innerHTML = '';
-        response.messages.forEach(message => {
-            displayMessage(message);
-        });
-    } catch (error) {
-        console.error('Failed to load chat history:', error);
+    // ИЗБРАННОЕ
+    if (favBtn && window.currentUser) {
+        favBtn.style.border = '2px solid blue'; // ✅ СИНЯЯ РАМКА
+        favBtn.addEventListener('click', toggleFavorite);
+        console.log('✅ ИЗБРАННОЕ подключена');
+    } else {
+        console.log('❌ ИЗБРАННОЕ:', favBtn ? 'есть' : 'НЕТ', window.currentUser ? 'есть' : 'НЕТ');
     }
 }
 
-async function loadReviews() {
-    try {
-        const response = await apiCall(`/api/reviews/product/${productId}`);
-        const container = document.getElementById('reviewsContainer');
-        container.innerHTML = '';
-        
-        if (response.reviews && response.reviews.length > 0) {
-            response.reviews.forEach(review => {
-                const reviewDiv = document.createElement('div');
-                reviewDiv.className = 'bg-gray-50 rounded-lg p-4 mb-4';
-                reviewDiv.innerHTML = `
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <strong class="text-gray-900">${review.authorName}</strong>
-                            <div class="flex items-center gap-1">
-                                ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
-                            </div>
-                        </div>
-                        <small class="text-gray-500">${new Date(review.createdAt).toLocaleString('ru-RU')}</small>
-                    </div>
-                    <p class="text-gray-700">${review.comment}</p>
-                `;
-                container.appendChild(reviewDiv);
-            });
-        } else {
-            container.innerHTML = '<p class="text-center text-gray-500 py-8">Пока нет отзывов. Будьте первым!</p>';
+async function apiCall(url, method = 'GET', data = null) {
+    const config = {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content || ''
         }
-    } catch (error) {
-        console.error('Failed to load reviews:', error);
-    }
-}
-
-function showReviewForm() {
-    const rating = prompt('Enter rating (1-5):');
-    if (!rating || rating < 1 || rating > 5) {
-        showNotification('Invalid rating', 'error');
-        return;
-    }
-
-    const comment = prompt('Enter your review:');
-    if (!comment) return;
-
-    const reviewData = {
-        productId: productId,
-        rating: parseInt(rating),
-        comment: comment
     };
+    if (data) config.body = JSON.stringify(data);
 
-    apiCall('/api/reviews', 'POST', reviewData)
-        .then(() => {
-            showNotification('Review added successfully!', 'success');
-            loadReviews();
-        })
-        .catch(error => {
-            showNotification('Failed to add review', 'error');
-        });
+    const response = await fetch(url, config);
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    return method === 'GET' ? await response.json() : response;
 }
 
-function getCurrentUserId() {
-    // This should be set from the server or retrieved from an API
-    return window.currentUserId || '';
+// 🛒 КУПИТЬ
+async function buyNow() {
+    const btn = document.getElementById('buyNow');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Создание заказа...';
+
+    try {
+        const orderData = {
+            productId: parseInt(window.productData.id),
+            quantity: 1,
+            shippingAddress: {
+                street: "ул. Тестовая 1",
+                city: "Москва",
+                state: "Московская область",
+                zipCode: "123456",
+                country: "Россия"
+            }
+        };
+
+        console.log('📤 Отправка заказа:', orderData);
+        await apiCall('/api/orders', 'POST', orderData);
+
+        showToast('✅ Заказ создан! Переход на /orders...', 'success');
+        setTimeout(() => window.location.href = '/orders', 1500);
+
+    } catch (error) {
+        console.error('❌ Ошибка заказа:', error);
+        showToast('❌ ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🛒 Купить сейчас';
+    }
 }
 
+// ❤️ ИЗБРАННОЕ (НОВЫЙ URL)
+async function toggleFavorite() {
+    const btn = document.getElementById('addToFavorites');
+    const isFavorited = btn.dataset.favorited === 'true';
+
+    try {
+        // 🔥 НОВЫЙ URL - БЕЗ /users/{id}/favorites/
+        const url = `/api/favorites/toggle/${window.productData.id}`;
+        console.log('📤 Избранное:', url, isFavorited ? 'DELETE' : 'POST');
+
+        await apiCall(url, isFavorited ? 'DELETE' : 'POST');
+
+        btn.dataset.favorited = (!isFavorited).toString();
+        btn.innerHTML = isFavorited ? '❤️ В избранное' : '❤️ Уже в избранном';
+        btn.classList.toggle('bg-red-100', !isFavorited);
+        btn.classList.toggle('text-red-600', !isFavorited);
+
+        showToast(isFavorited ? '❌ Удалено из избранного' : '❤️ Добавлено!', 'success');
+
+    } catch (error) {
+        console.error('❌ Ошибка избранного:', error);
+        showToast('❌ ' + error.message, 'error');
+    }
+}
+
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-20 right-4 z-50 px-6 py-4 rounded-xl shadow-2xl text-white font-semibold max-w-sm
+        ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}

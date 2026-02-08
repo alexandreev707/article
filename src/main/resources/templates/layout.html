@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -55,6 +55,11 @@
                 <div class="hidden md:flex md:items-center md:space-x-6">
                     <a th:href="@{/}" class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Главная</a>
                     <a th:href="@{/products}" class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Каталог</a>
+                    <a th:if="${currentUser != null}"
+                       th:href="@{/favorites}"
+                       class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">
+                        ❤️ Избранное
+                    </a>
                     <a th:if="${currentUser != null}" th:href="@{/orders}" class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Заказы</a>
                     <a th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.model.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.model.UserRole).ADMIN))}" 
                        th:href="@{/seller/products}" 
@@ -92,6 +97,11 @@
                 <div class="flex flex-col space-y-2 pt-4">
                     <a th:href="@{/}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Главная</a>
                     <a th:href="@{/products}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Каталог</a>
+                    <a th:if="${currentUser != null}"
+                       th:href="@{/favorites}"
+                       class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        ❤️ Избранное
+                    </a>
                     <a th:if="${currentUser != null}" th:href="@{/orders}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Заказы</a>
                     <a th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.model.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.model.UserRole).ADMIN))}" 
                        th:href="@{/seller/products}" 

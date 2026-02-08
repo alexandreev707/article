@@ -145,6 +145,22 @@ class ProductService(
         }
     }
 
+    fun findByIds(ids: List<Long>, pageable: Pageable): List<ProductResponseDto> {
+        if (ids.isEmpty()) return emptyList()
+
+        val products = productRepository.findByIdIn(ids)
+            // Сортируем по порядку ID из избранного
+            .sortedBy { ids.indexOf(it.id!!) }
+
+        // Пагинация на уровне сервиса
+        val start = (pageable.pageNumber * pageable.pageSize).coerceAtMost(products.size)
+        val end = (start + pageable.pageSize).coerceAtMost(products.size)
+
+        return products.subList(start, end).map {
+            toDto(it, userService.findById(it.sellerId).username)
+        }
+    }
+
     fun toDto(product: Product, sellerName: String? = null): ProductResponseDto {
         val seller = sellerName ?: userService.findById(product.sellerId).username
         return ProductResponseDto(

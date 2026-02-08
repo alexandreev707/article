@@ -36,19 +36,17 @@ class OrderController(
     ): ResponseEntity<Map<String, Any>> {
         val userId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
-        
-        val isSeller = userService.hasRole("SELLER") || userService.hasRole("ADMIN")
-        val orders = if (isSeller) {
-            orderService.findBySeller(userId, PageRequest.of(page, size))
-        } else {
-            orderService.findByBuyer(userId, PageRequest.of(page, size))
-        }
 
-        return ResponseEntity.ok(mapOf(
-            "orders" to orders.map { orderService.toDto(it) },
-            "totalPages" to orders.totalPages,
-            "currentPage" to page
-        ))
+        //val isSeller = userService.hasRole("SELLER") || userService.hasRole("ADMIN")
+        val orders = orderService.findByBuyer(userId, PageRequest.of(page, size))
+
+        return ResponseEntity.ok(
+            mapOf(
+                "orders" to orders.map { orderService.toDto(it) },
+                "totalPages" to orders.totalPages,
+                "currentPage" to page
+            )
+        )
     }
 
     @GetMapping("/{id}")
@@ -57,7 +55,7 @@ class OrderController(
         val order = orderService.findById(id.toLong())
         val userId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
-        
+
         if (order.buyerId != userId && order.sellerId != userId && !userService.hasRole("ADMIN")) {
             throw IllegalStateException("Access denied")
         }

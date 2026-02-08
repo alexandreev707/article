@@ -2,6 +2,7 @@ package com.cryptodrop.controller
 
 import com.cryptodrop.service.ProductService
 import com.cryptodrop.service.UserService
+import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
@@ -15,12 +16,56 @@ class FavoriteController(
 
     @PostMapping("/{productId}")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
-    fun toggleFavorite(@PathVariable productId: String): ResponseEntity<Map<String, Any>> {
-        val userId = userService.getCurrentUserId()
+    fun addFavorite(
+        @PathVariable userId: Long,
+        @PathVariable productId: Long
+    ): ResponseEntity<Map<String, Any>> {
+        val currentUserId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
-        
-        val user = userService.toggleFavorite(userId, productId.toLong())
-        val isFavorite = user.favoriteProductIds.contains(productId.toLong())
+
+        if (currentUserId != userId) {
+            throw IllegalStateException("Access denied")
+        }
+
+        val user = userService.toggleFavorite(userId, productId)
+        val isFavorite = user.favoriteProductIds.contains(productId)
+
+        return ResponseEntity.ok(mapOf(
+            "productId" to productId,
+            "isFavorite" to true,
+            "favorites" to user.favoriteProductIds.map { it.toString() }
+        ))
+    }
+
+    @DeleteMapping("/{productId}")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    fun removeFavorite(
+        @PathVariable userId: Long,
+        @PathVariable productId: Long
+    ): ResponseEntity<Map<String, Any>> {
+        val currentUserId = userService.getCurrentUserId()
+            ?: throw IllegalStateException("User not authenticated")
+
+        if (currentUserId != userId) {
+            throw IllegalStateException("Access denied")
+        }
+
+        val user = userService.removeFavorite(userId, productId)
+        val isFavorite = user.favoriteProductIds.contains(productId)
+
+        return ResponseEntity.ok(mapOf(
+            "productId" to productId,
+            "isFavorite" to false,
+            "favorites" to user.favoriteProductIds.map { it.toString() }
+        ))
+    }
+
+    @PostMapping("/toggle/{productId}")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    fun toggleFavorite(@PathVariable productId: Long): ResponseEntity<Map<String, Any>> {
+        val userId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
+        val user = userService.toggleFavorite(userId, productId)
+        val isFavorite = user.favoriteProductIds.contains(productId)
 
         return ResponseEntity.ok(mapOf(
             "productId" to productId,
@@ -31,26 +76,24 @@ class FavoriteController(
 
     @GetMapping
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
-    fun getFavorites(): ResponseEntity<Map<String, Any>> {
+    fun getFavorites(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "12") size: Int
+    ): ResponseEntity<Map<String, Any>> {
         val userId = userService.getCurrentUserId()
             ?: throw IllegalStateException("User not authenticated")
-        
+
         val user = userService.findById(userId)
-        val products = if (user.favoriteProductIds.isNotEmpty()) {
-            user.favoriteProductIds.mapNotNull { productId ->
-                try {
-                    productService.findById(productId)
-                } catch (e: Exception) {
-                    null
-                }
-            }.map { productService.toDto(it) }
-        } else {
-            emptyList()
-        }
+        val favoriteIds = user.favoriteProductIds.toList()
+
+        val favoriteProducts = productService.findByIds(favoriteIds, PageRequest.of(page, size))
 
         return ResponseEntity.ok(mapOf(
-            "products" to products,
-            "count" to products.size
+            "products" to favoriteProducts,
+            "totalPages" to 1,
+            "currentPage" to page,
+            "count" to favoriteProducts.size
         ))
     }
+
 }

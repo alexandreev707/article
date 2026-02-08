@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
+<head>
+    <title>Избранное - Marketplace</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="container py-8">
+        <h1 class="text-3xl font-bold mb-8 text-gray-900">❤️ Избранное</h1>
+
+        <div id="favoritesContainer" class="product-grid">
+            <div class="text-center py-12 col-span-full">
+                <div class="spinner"></div>
+                <p class="text-gray-500 mt-4">Загрузка избранного...</p>
+            </div>
+        </div>
+
+        <div id="pagination" class="mt-8 flex justify-center items-center gap-4 hidden">
+            <button id="prevPage" class="btn-secondary px-6 py-2">← Назад</button>
+            <span id="pageInfo" class="text-gray-600 font-medium">Страница 1 из 1</span>
+            <button id="nextPage" class="btn-secondary px-6 py-2">Вперед →</button>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        const pageSize = 12;
+
+        async function loadFavorites() {
+            try {
+                const response = await fetch(`/api/favorites?page=${currentPage}&size=${pageSize}`);
+                const data = await response.json();
+
+                console.log('❤️ Избранное:', data);
+
+                const container = document.getElementById('favoritesContainer');
+                const pagination = document.getElementById('pagination');
+
+                const products = data.products || [];
+                const totalPages = data.totalPages || 1;
+
+                if (products.length === 0) {
+                    container.innerHTML = `
+                    <div class="col-span-full text-center py-16 text-gray-500">
+                        <div class="text-6xl mb-4">❤️</div>
+                        <p class="text-xl mb-2">Избранное пусто</p>
+                        <p class="text-lg">Добавьте товары, нажав ❤️ на странице товара</p>
+                    </div>
+                `;
+                    if (pagination) pagination.classList.add('hidden');
+                    return;
+                }
+
+                container.innerHTML = products.map(product => `
+                <div class="product-card">
+                    <a href="/products/${product.id}" class="block h-full">
+                        <div class="product-card-image">
+                            <img src="${product.images?.[0] || '/img/placeholder.jpg'}"
+                                 alt="${product.title}"
+                                 onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>Нет фото</div>'">
+                            <div class="product-card-badge bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                                ❤️ Избранное
+                            </div>
+                        </div>
+                        <div class="product-card-content">
+                            <h3 class="product-card-title">${product.title}</h3>
+                            <div class="mt-auto">
+                                <div class="product-card-price">$${Number(product.price).toFixed(2)}</div>
+                                <div class="flex gap-2 mt-2">
+                                    <span class="text-yellow-400 text-sm">★ ${Number(product.rating).toFixed(1)}</span>
+                                    <span class="text-gray-500 text-sm">(${product.reviewCount})</span>
+                                </div>
+                            </div>
+                        </a>
+                        <button onclick="removeFromFavorites(${product.id})"
+                                class="btn-danger w-full mt-2 text-sm py-2">
+                            Удалить из избранного
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+                if (pagination) {
+                    document.getElementById('pageInfo').textContent =
+                        `Страница ${currentPage + 1} из ${totalPages}`;
+
+                    document.getElementById('prevPage').disabled = currentPage === 0;
+                    document.getElementById('nextPage').disabled = currentPage >= totalPages - 1;
+                    pagination.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error('❌ Ошибка избранного:', error);
+                document.getElementById('favoritesContainer').innerHTML =
+                    '<p class="text-center py-12 text-red-500">Ошибка загрузки избранного</p>';
+            }
+        }
+
+        async function removeFromFavorites(productId) {
+            try {
+                await fetch(`/api/users/${window.currentUser?.id}/${productId}/favorites`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content }
+                });
+                showToast('✅ Удалено из избранного!', 'success');
+                loadFavorites(); // Перезагрузить
+            } catch (error) {
+                showToast('❌ Ошибка удаления', 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-20 right-4 z-50 px-6 py-4 rounded-xl shadow-2xl text-white font-semibold max-w-sm
+            ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFavorites();
+
+            document.getElementById('prevPage')?.addEventListener('click', () => {
+                if (currentPage > 0) {
+                    currentPage--;
+                    loadFavorites();
+                }
+            });
+
+            document.getElementById('nextPage')?.addEventListener('click', () => {
+                currentPage++;
+                loadFavorites();
+            });
+        });
+    </script>
+</div>
+</body>
+</html>

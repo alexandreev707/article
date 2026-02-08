@@ -84,7 +84,22 @@ class UserService(
         return userRepository.save(updatedUser)
     }
 
-    @Cacheable("users")
+    fun addFavorite(userId: Long, productId: Long): User {
+        val user = findById(userId)
+        if (!user.favoriteProductIds.contains(productId)) {
+            user.favoriteProductIds.add(productId)
+            return userRepository.save(user)
+        }
+        return user
+    }
+
+    fun removeFavorite(userId: Long, productId: Long): User {
+        val user = findById(userId)
+        user.favoriteProductIds.remove(productId)
+        return userRepository.save(user)
+    }
+
+   // @Cacheable("users")
     fun findById(userId: Long): User {
         return userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found: $userId") }

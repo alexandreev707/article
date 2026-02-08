@@ -51,4 +51,24 @@ class SellerController(
         model.addAttribute("totalPages", orders.totalPages)
         return "seller/orders"
     }
+
+    @GetMapping
+    fun myProducts(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        model: Model
+    ): String {
+        val sellerId = userService.getCurrentUserId()
+            ?: throw IllegalStateException("User not authenticated")
+
+        val products = productService.findBySeller(sellerId, PageRequest.of(page, size))
+
+        model.addAttribute("title", "Мои товары - Marketplace")
+        model.addAttribute("products", products.map { productService.toDto(it) })
+        model.addAttribute("currentPage", page)
+        model.addAttribute("totalPages", products.totalPages)
+        model.addAttribute("currentUser", userService.getCurrentUser())
+
+        return "seller/products"
+    }
 }
