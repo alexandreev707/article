@@ -1,114 +1,114 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
 <head>
-    <title>Главная - Marketplace</title>
+    <title>Home - Marketplace</title>
 </head>
 <body>
-    <div th:fragment="content">
-        <div class="container py-8">
-            <!-- Hero Banner -->
-            <div class="hero-section fade-in mb-12">
-                <div class="max-w-3xl">
-                    <h1 class="text-4xl md:text-5xl font-bold mb-4">Добро пожаловать в Marketplace</h1>
-                    <p class="text-lg md:text-xl text-blue-100 mb-6">Тысячи товаров от проверенных продавцов</p>
-                    <a th:href="@{/products}" class="inline-block bg-white text-primary px-8 py-3 rounded-lg font-semibold text-base hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl">
-                        Перейти в каталог →
+<div th:fragment="content">
+    <div class="container py-8">
+        <!-- Hero Banner -->
+        <div class="hero-section fade-in mb-12">
+            <div class="max-w-3xl">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">Welcome to Marketplace</h1>
+                <p class="text-lg md:text-xl text-blue-100 mb-6">Thousands of products from verified sellers</p>
+                <a th:href="@{/products}" class="inline-block bg-white text-primary px-8 py-3 rounded-lg font-semibold text-base hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl">
+                    Go to Catalog →
+                </a>
+            </div>
+        </div>
+
+        <!-- Popular Categories -->
+        <div class="mb-12" th:if="${popularCategories != null and !popularCategories.isEmpty()}">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900">Popular Categories</h2>
+            <div class="flex flex-wrap gap-3">
+                <a th:each="category : ${popularCategories}"
+                   th:href="@{/products(category=${category})}"
+                   class="category-chip">
+                    <span th:text="${category}">Category</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recommended Products -->
+        <div class="mb-12" th:if="${recommendedProducts != null and !recommendedProducts.isEmpty()}">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900">Recommended for You</h2>
+            <div class="product-grid">
+                <div th:each="product : ${recommendedProducts}" class="product-card slide-up">
+                    <a th:href="@{/products/{id}(id=${product.id})}" class="block h-full">
+                        <div class="product-card-image">
+                            <img th:if="${product.images != null and !product.images.isEmpty()}"
+                                 th:src="${product.images[0]}"
+                                 alt="Product image"
+                                 onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>No photo</div>'">
+                            <div th:unless="${product.images != null and !product.images.isEmpty()}"
+                                 class="image-placeholder h-full">
+                                No photo
+                            </div>
+                            <div th:if="${product.stock == 0}" class="product-card-badge">Out of stock</div>
+                        </div>
+                        <div class="product-card-content">
+                            <h3 class="product-card-title" th:text="${product.title}">Product Title</h3>
+                            <div class="mt-auto">
+                                <div class="product-card-price" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</div>
+                                <div class="product-card-rating">
+                                    <span class="product-card-rating-star">★</span>
+                                    <span th:text="${#numbers.formatDecimal(product.rating, 1, 1)}">0.0</span>
+                                    <span class="text-gray-400 ml-1" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
+                                </div>
+                            </div>
+                        </div>
                     </a>
-                </div>
-            </div>
-
-            <!-- Popular Categories -->
-            <div class="mb-12" th:if="${popularCategories != null and !popularCategories.isEmpty()}">
-                <h2 class="text-2xl font-bold mb-6 text-gray-900">Популярные категории</h2>
-                <div class="flex flex-wrap gap-3">
-                    <a th:each="category : ${popularCategories}" 
-                       th:href="@{/products(category=${category})}"
-                       class="category-chip">
-                        <span th:text="${category}">Category</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Recommended Products -->
-            <div class="mb-12" th:if="${recommendedProducts != null and !recommendedProducts.isEmpty()}">
-                <h2 class="text-2xl font-bold mb-6 text-gray-900">Рекомендуем вам</h2>
-                <div class="product-grid">
-                    <div th:each="product : ${recommendedProducts}" class="product-card slide-up">
-                        <a th:href="@{/products/{id}(id=${product.id})}" class="block h-full">
-                            <div class="product-card-image">
-                                <img th:if="${product.images != null and !product.images.isEmpty()}" 
-                                     th:src="${product.images[0]}" 
-                                     alt="Product image"
-                                     onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>Нет фото</div>'">
-                                <div th:unless="${product.images != null and !product.images.isEmpty()}" 
-                                     class="image-placeholder h-full">
-                                    Нет фото
-                                </div>
-                                <div th:if="${product.stock == 0}" class="product-card-badge">Нет в наличии</div>
-                            </div>
-                            <div class="product-card-content">
-                                <h3 class="product-card-title" th:text="${product.title}">Product Title</h3>
-                                <div class="mt-auto">
-                                    <div class="product-card-price" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</div>
-                                    <div class="product-card-rating">
-                                        <span class="product-card-rating-star">★</span>
-                                        <span th:text="${#numbers.formatDecimal(product.rating, 1, 1)}">0.0</span>
-                                        <span class="text-gray-400 ml-1" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- All Products -->
-            <div>
-                <h2 class="text-2xl font-bold mb-6 text-gray-900">Все товары</h2>
-                <div class="product-grid" th:if="${products != null and !products.isEmpty()}">
-                    <div th:each="product : ${products}" class="product-card slide-up">
-                        <a th:href="@{/products/{id}(id=${product.id})}" class="block h-full">
-                            <div class="product-card-image">
-                                <img th:if="${product.images != null and !product.images.isEmpty()}" 
-                                     th:src="${product.images[0]}" 
-                                     alt="Product image"
-                                     onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>Нет фото</div>'">
-                                <div th:unless="${product.images != null and !product.images.isEmpty()}" 
-                                     class="image-placeholder h-full">
-                                    Нет фото
-                                </div>
-                                <div th:if="${product.stock == 0}" class="product-card-badge">Нет в наличии</div>
-                            </div>
-                            <div class="product-card-content">
-                                <h3 class="product-card-title" th:text="${product.title}">Product Title</h3>
-                                <div class="mt-auto">
-                                    <div class="product-card-price" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</div>
-                                    <div class="product-card-rating">
-                                        <span class="product-card-rating-star">★</span>
-                                        <span th:text="${#numbers.formatDecimal(product.rating, 1, 1)}">0.0</span>
-                                        <span class="text-gray-400 ml-1" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                <div th:if="${products == null or products.isEmpty()}" class="text-center py-12 text-gray-500">
-                    <p>Товары не найдены</p>
-                </div>
-
-                <!-- Pagination -->
-                <div class="mt-12 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
-                    <a th:if="${currentPage > 0}" 
-                       th:href="@{/(page=${currentPage - 1})}"
-                       class="btn-secondary px-6 py-2">← Назад</a>
-                    <span class="text-gray-600 font-medium" th:text="'Страница ' + (${currentPage} + 1) + ' из ' + ${totalPages}">Страница 1 из 1</span>
-                    <a th:if="${currentPage < totalPages - 1}" 
-                       th:href="@{/(page=${currentPage + 1})}"
-                       class="btn-secondary px-6 py-2">Вперед →</a>
                 </div>
             </div>
         </div>
+
+        <!-- All Products -->
+        <div>
+            <h2 class="text-2xl font-bold mb-6 text-gray-900">All Products</h2>
+            <div class="product-grid" th:if="${products != null and !products.isEmpty()}">
+                <div th:each="product : ${products}" class="product-card slide-up">
+                    <a th:href="@{/products/{id}(id=${product.id})}" class="block h-full">
+                        <div class="product-card-image">
+                            <img th:if="${product.images != null and !product.images.isEmpty()}"
+                                 th:src="${product.images[0]}"
+                                 alt="Product image"
+                                 onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>No photo</div>'">
+                            <div th:unless="${product.images != null and !product.images.isEmpty()}"
+                                 class="image-placeholder h-full">
+                                No photo
+                            </div>
+                            <div th:if="${product.stock == 0}" class="product-card-badge">Out of stock</div>
+                        </div>
+                        <div class="product-card-content">
+                            <h3 class="product-card-title" th:text="${product.title}">Product Title</h3>
+                            <div class="mt-auto">
+                                <div class="product-card-price" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</div>
+                                <div class="product-card-rating">
+                                    <span class="product-card-rating-star">★</span>
+                                    <span th:text="${#numbers.formatDecimal(product.rating, 1, 1)}">0.0</span>
+                                    <span class="text-gray-400 ml-1" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <div th:if="${products == null or products.isEmpty()}" class="text-center py-12 text-gray-500">
+                <p>No products found</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-12 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
+                <a th:if="${currentPage > 0}"
+                   th:href="@{/(page=${currentPage - 1})}"
+                   class="btn-secondary px-6 py-2">← Previous</a>
+                <span class="text-gray-600 font-medium" th:text="'Page ' + (${currentPage} + 1) + ' of ' + ${totalPages}">Page 1 of 1</span>
+                <a th:if="${currentPage < totalPages - 1}"
+                   th:href="@{/(page=${currentPage + 1})}"
+                   class="btn-secondary px-6 py-2">Next →</a>
+            </div>
+        </div>
     </div>
+</div>
 </body>
 </html>

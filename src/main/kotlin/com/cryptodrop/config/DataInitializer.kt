@@ -57,7 +57,7 @@ class DataInitializer(
             description = "Premium noise-cancelling wireless headphones with 30-hour battery life. Perfect for music lovers and professionals.",
             price = BigDecimal("129.99"),
             category = "Electronics",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Headphones"),
+            images = mutableListOf("/images/img.png"),
             stock = 50,
             active = true
         ))
@@ -68,7 +68,7 @@ class DataInitializer(
             description = "Latest generation smartphone with high-resolution display, powerful processor, and excellent camera system.",
             price = BigDecimal("599.99"),
             category = "Electronics",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Smartphone"),
+            images = mutableListOf("/images/img_1.png"),
             stock = 25,
             active = true
         ))
@@ -79,7 +79,7 @@ class DataInitializer(
             description = "High-performance laptop with fast SSD, 16GB RAM, and long battery life. Ideal for work and entertainment.",
             price = BigDecimal("899.99"),
             category = "Electronics",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Laptop"),
+            images = mutableListOf("/images/img_2.png"),
             stock = 15,
             active = true
         ))
@@ -91,7 +91,7 @@ class DataInitializer(
             description = "Comfortable 100% cotton t-shirt in various colors. Perfect for everyday wear.",
             price = BigDecimal("19.99"),
             category = "Clothing",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=T-Shirt"),
+            images = mutableListOf("/images/img_3.png"),
             stock = 100,
             active = true
         ))
@@ -102,7 +102,7 @@ class DataInitializer(
             description = "Classic fit denim jeans made from premium cotton. Durable and stylish.",
             price = BigDecimal("49.99"),
             category = "Clothing",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Jeans"),
+            images = mutableListOf("/images/img_4.png"),
             stock = 75,
             active = true
         ))
@@ -114,7 +114,7 @@ class DataInitializer(
             description = "Set of 3 beautiful indoor plants perfect for home decoration. Includes care instructions.",
             price = BigDecimal("34.99"),
             category = "Home & Garden",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Plants"),
+            images = mutableListOf("/images/img_9.png"),
             stock = 30,
             active = true
         ))
@@ -125,7 +125,7 @@ class DataInitializer(
             description = "Programmable coffee maker with thermal carafe. Makes up to 12 cups of delicious coffee.",
             price = BigDecimal("79.99"),
             category = "Home & Garden",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Coffee+Maker"),
+            images = mutableListOf("/images/img_5.png"),
             stock = 40,
             active = true
         ))
@@ -137,7 +137,7 @@ class DataInitializer(
             description = "Non-slip yoga mat with carrying strap. Perfect for yoga, pilates, and fitness exercises.",
             price = BigDecimal("24.99"),
             category = "Sports",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Yoga+Mat"),
+            images = mutableListOf("/images/img_6.png"),
             stock = 60,
             active = true
         ))
@@ -148,7 +148,7 @@ class DataInitializer(
             description = "Lightweight running shoes with cushioned sole. Designed for comfort and performance.",
             price = BigDecimal("89.99"),
             category = "Sports",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Running+Shoes"),
+            images = mutableListOf("/images/img_7.png"),
             stock = 45,
             active = true
         ))
@@ -160,7 +160,7 @@ class DataInitializer(
             description = "Comprehensive guide to modern programming practices. Perfect for beginners and experienced developers.",
             price = BigDecimal("29.99"),
             category = "Books",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Book"),
+            images = mutableListOf("/images/img_8.png"),
             stock = 80,
             active = true
         ))
@@ -171,7 +171,7 @@ class DataInitializer(
             description = "Set of 5 cookbooks with recipes from around the world. Great gift for cooking enthusiasts.",
             price = BigDecimal("49.99"),
             category = "Books",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Cookbooks"),
+            images = mutableListOf("/images/img_10.png"),
             stock = 35,
             active = true
         ))
@@ -183,7 +183,7 @@ class DataInitializer(
             description = "Educational building blocks set with 200 pieces. Encourages creativity and problem-solving.",
             price = BigDecimal("39.99"),
             category = "Toys",
-            images = mutableListOf("https://via.placeholder.com/400x300?text=Building+Blocks"),
+            images = mutableListOf("/images/img_11.png"),
             stock = 55,
             active = true
         ))

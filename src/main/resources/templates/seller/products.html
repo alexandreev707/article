@@ -17,11 +17,11 @@
                 <div th:each="product : ${products}" class="product-card slide-up">
                     <a th:href="@{/products/{id}(id=${product.id})}" class="block h-full">
                         <div class="product-card-image">
-                            <img th:if="${product.images != null and !product.images.isEmpty()}" 
-                                 th:src="${product.images[0]}" 
+                            <img th:if="${product.images != null and !product.images.isEmpty()}"
+                                 th:src="${product.images[0]}"
                                  alt="Product image"
                                  onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>Нет фото</div>'">
-                            <div th:unless="${product.images != null and !product.images.isEmpty()}" 
+                            <div th:unless="${product.images != null and !product.images.isEmpty()}"
                                  class="image-placeholder h-full">
                                 Нет фото
                             </div>
@@ -32,7 +32,7 @@
                             <div class="mt-auto">
                                 <div class="product-card-price" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</div>
                                 <div class="mt-2">
-                                    <a th:href="@{/seller/products/edit/{id}(id=${product.id})}" 
+                                    <a th:href="@{/seller/products/edit/{id}(id=${product.id})}"
                                        class="btn-secondary w-full text-center text-sm py-2">
                                         ✏️ Редактировать
                                     </a>
@@ -42,18 +42,18 @@
                     </a>
                 </div>
             </div>
-            
+
             <div th:if="${products == null or products.isEmpty()}" class="text-center py-12 text-gray-500">
                 <p>У вас пока нет товаров</p>
             </div>
 
             <!-- Pagination -->
             <div class="mt-8 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
-                <a th:if="${currentPage > 0}" 
+                <a th:if="${currentPage > 0}"
                    th:href="@{/seller/products(page=${currentPage - 1})}"
                    class="btn-secondary px-6 py-2">← Назад</a>
                 <span class="text-gray-600 font-medium" th:text="'Страница ' + (${currentPage} + 1) + ' из ' + ${totalPages}">Страница 1 из 1</span>
-                <a th:if="${currentPage < totalPages - 1}" 
+                <a th:if="${currentPage < totalPages - 1}"
                    th:href="@{/seller/products(page=${currentPage + 1})}"
                    class="btn-secondary px-6 py-2">Вперед →</a>
             </div>

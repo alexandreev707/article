@@ -27,7 +27,7 @@ class HomeController(
         val popularCategories = productService.getPopularCategories(6)
         val allProducts = productService.findAllActive(PageRequest.of(page, size))
 
-        model.addAttribute("title", "Главная - Marketplace")
+        model.addAttribute("title", "Main - Marketplace")
         model.addAttribute("recommendedProducts", recommendedProducts.map { productService.toDto(it) })
         model.addAttribute("popularCategories", popularCategories)
         model.addAttribute("products", allProducts.map { productService.toDto(it) })
