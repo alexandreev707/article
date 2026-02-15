@@ -9,7 +9,7 @@ class LoginController {
 
     @GetMapping("/login")
     fun login(model: Model): String {
-        model.addAttribute("title", "Вход - Marketplace")
+        model.addAttribute("title", "Sign in - Marketplace")
         return "login"
     }
 }

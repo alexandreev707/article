@@ -38,7 +38,7 @@ class ProductController(
         val products = productService.searchProducts(filter, page, size)
         val categories = productService.getPopularCategories(20)
 
-        model.addAttribute("title", "Каталог - Marketplace")
+        model.addAttribute("title", "Catalog - Marketplace")
         model.addAttribute("products", products.map { productService.toDto(it) })
         model.addAttribute("categories", categories)
         model.addAttribute("filter", filter)

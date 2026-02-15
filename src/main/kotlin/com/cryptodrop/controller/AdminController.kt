@@ -21,7 +21,7 @@ class AdminController(
 
     @GetMapping
     fun adminPanel(model: Model): String {
-        model.addAttribute("title", "Панель администратора - Marketplace")
+        model.addAttribute("title", "Admin panel - Marketplace")
         model.addAttribute("currentUser", userService.getCurrentUser())
         return "admin/index"
     }
@@ -43,7 +43,7 @@ class AdminController(
             else -> adminService.getAllUsers(PageRequest.of(page, size))
         }
 
-        model.addAttribute("title", "Управление пользователями - Marketplace")
+        model.addAttribute("title", "User management - Marketplace")
         model.addAttribute("users", users.map { userService.toDto(it) })
         model.addAttribute("currentPage", page)
         model.addAttribute("totalPages", users.totalPages)

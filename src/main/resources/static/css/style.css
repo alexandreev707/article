@@ -107,7 +107,7 @@ body {
 .product-card-badge {
     position: absolute;
     top: 8px;
-    right: 8px;
+    left: 8px;
     background: var(--danger);
     color: white;
     padding: 4px 8px;
@@ -116,6 +116,79 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     z-index: 1;
+}
+
+/* Favorite heart button overlay on product image */
+.product-card-favorite-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.product-card-favorite-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
+}
+.product-card-favorite-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--text-dark);
+    stroke-width: 2px;
+    fill: none;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+}
+.product-card-favorite-btn.favorited svg {
+    fill: var(--danger);
+    stroke: var(--danger);
+}
+
+/* Favorite button on product detail page (larger) */
+.product-detail-favorite-btn {
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+}
+.product-detail-favorite-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Add to cart button at bottom of product card */
+.product-card-add-cart {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 8px;
+}
+.product-card-add-cart:hover:not(:disabled) {
+    background: var(--primary-dark);
+}
+.product-card-add-cart:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
 .product-card-content {

@@ -1,6 +1,6 @@
 // src/main/resources/static/js/product-detail.js
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 ProductDetail JS загружен');
+    console.log('ProductDetail JS loaded');
     console.log('📊 window.productData:', window.productData);
     console.log('📊 window.currentUser:', window.currentUser);
 
@@ -58,62 +58,57 @@ async function apiCall(url, method = 'GET', data = null) {
     return method === 'GET' ? await response.json() : response;
 }
 
-// 🛒 КУПИТЬ
+// Buy now
 async function buyNow() {
     const btn = document.getElementById('buyNow');
     btn.disabled = true;
-    btn.innerHTML = '⏳ Создание заказа...';
+    btn.innerHTML = '⏳ Creating order...';
 
     try {
         const orderData = {
             productId: parseInt(window.productData.id),
             quantity: 1,
             shippingAddress: {
-                street: "ул. Тестовая 1",
-                city: "Москва",
-                state: "Московская область",
-                zipCode: "123456",
-                country: "Россия"
+                street: "123 Test St",
+                city: "New York",
+                state: "NY",
+                zipCode: "10001",
+                country: "USA"
             }
         };
 
-        console.log('📤 Отправка заказа:', orderData);
         await apiCall('/api/orders', 'POST', orderData);
 
-        showToast('✅ Заказ создан! Переход на /orders...', 'success');
+        showToast('Order created! Redirecting to /orders...', 'success');
         setTimeout(() => window.location.href = '/orders', 1500);
 
     } catch (error) {
-        console.error('❌ Ошибка заказа:', error);
-        showToast('❌ ' + error.message, 'error');
+        console.error('Order error:', error);
+        showToast(error.message, 'error');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '🛒 Купить сейчас';
+        btn.innerHTML = '🛒 Buy now';
     }
 }
 
-// ❤️ ИЗБРАННОЕ (НОВЫЙ URL)
+// Favorites (heart button on image)
 async function toggleFavorite() {
     const btn = document.getElementById('addToFavorites');
+    if (!btn) return;
     const isFavorited = btn.dataset.favorited === 'true';
 
     try {
-        // 🔥 НОВЫЙ URL - БЕЗ /users/{id}/favorites/
         const url = `/api/favorites/toggle/${window.productData.id}`;
-        console.log('📤 Избранное:', url, isFavorited ? 'DELETE' : 'POST');
-
         await apiCall(url, isFavorited ? 'DELETE' : 'POST');
 
         btn.dataset.favorited = (!isFavorited).toString();
-        btn.innerHTML = isFavorited ? '❤️ В избранное' : '❤️ Уже в избранном';
-        btn.classList.toggle('bg-red-100', !isFavorited);
-        btn.classList.toggle('text-red-600', !isFavorited);
+        btn.classList.toggle('favorited', !isFavorited);
 
-        showToast(isFavorited ? '❌ Удалено из избранного' : '❤️ Добавлено!', 'success');
+        showToast(isFavorited ? 'Removed from favorites' : 'Added to favorites!', 'success');
 
     } catch (error) {
-        console.error('❌ Ошибка избранного:', error);
-        showToast('❌ ' + error.message, 'error');
+        console.error('Favorites error:', error);
+        showToast(error.message || 'Error', 'error');
     }
 }
 

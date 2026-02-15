@@ -56,8 +56,8 @@
 
             <!-- Products Grid -->
             <div class="product-grid" th:if="${products != null and !products.isEmpty()}">
-                <div th:each="product : ${products}" class="product-card slide-up">
-                    <a th:href="@{/products/{id}(id=${product.id})}" class="block h-full">
+                <div th:each="product : ${products}" class="product-card slide-up" style="display: flex; flex-direction: column;">
+                    <a th:href="@{/products/{id}(id=${product.id})}" class="block flex-1" style="text-decoration: none; color: inherit;">
                         <div class="product-card-image">
                             <img th:if="${product.images != null and !product.images.isEmpty()}" 
                                  th:src="${product.images[0]}" 
@@ -68,6 +68,17 @@
                                 No photo
                             </div>
                             <div th:if="${product.stock == 0}" class="product-card-badge">Out of stock</div>
+                            <button th:if="${currentUser != null}"
+                                    type="button"
+                                    class="product-card-favorite-btn"
+                                    th:classappend="${#lists.contains(currentUser.favoriteProductIds, product.id)} ? 'favorited' : ''"
+                                    th:attr="data-product-id=${product.id}, data-favorited=${#lists.contains(currentUser.favoriteProductIds, product.id)}"
+                                    onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteCard(this.dataset.productId, this)"
+                                    title="Add to favorites">
+                                <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                </svg>
+                            </button>
                         </div>
                         <div class="product-card-content">
                             <h3 class="product-card-title" th:text="${product.title}">Product Title</h3>
@@ -81,12 +92,22 @@
                             </div>
                         </div>
                     </a>
+                    <button th:if="${currentUser != null && product.stock > 0}"
+                            type="button"
+                            class="product-card-add-cart"
+                            th:attr="data-product-id=${product.id}"
+                            onclick="event.preventDefault(); addToCartCard(this.dataset.productId, this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                        <span>Add to cart</span>
+                    </button>
                 </div>
             </div>
             
             <div th:if="${products == null or products.isEmpty()}" class="text-center py-12 text-gray-500">
                 <p>No products found</p>
             </div>
+
+            <script th:if="${currentUser != null}" th:src="@{/js/product-cards.js}"></script>
 
             <!-- Pagination -->
             <div class="mt-12 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">

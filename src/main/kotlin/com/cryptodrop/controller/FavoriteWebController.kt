@@ -14,7 +14,7 @@ class FavoriteWebController(private val userService: UserService) {
     fun favorites(model: Model): String {
         val currentUser = userService.getCurrentUser()
         model.addAttribute("currentUser", currentUser)
-        model.addAttribute("title", "Избранное - Marketplace")
+        model.addAttribute("title", "Favorites - Marketplace")
         return "favorites/list"  // templates/favorites/list.html
     }
 }
