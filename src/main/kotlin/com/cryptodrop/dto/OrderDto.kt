@@ -43,6 +43,7 @@ data class OrderResponseDto(
     val productTitle: String? = null,
     val quantity: Int,
     val totalPrice: BigDecimal,
+    val discountAmount: BigDecimal? = null,
     val status: OrderStatus,
     val shippingAddress: AddressDto,
     val createdAt: String,
@@ -52,6 +53,13 @@ data class OrderResponseDto(
 data class OrderStatusUpdateDto(
     @field:NotNull(message = "Status is required")
     val status: OrderStatus
+)
+
+data class CheckoutDto(
+    val deliveryOptionId: Long,
+    val shippingAddress: AddressDto? = null,
+    val discountAmount: BigDecimal? = null,
+    val paymentMethodId: String? = null
 )
 
 

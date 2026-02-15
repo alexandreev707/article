@@ -14,6 +14,7 @@ class DataInitializer(
     private val productRepository: ProductRepository,
     private val reviewRepository: ReviewRepository,
     private val orderRepository: OrderRepository,
+    private val deliveryOptionRepository: DeliveryOptionRepository,
     private val passwordEncoder: PasswordEncoder
 ) : CommandLineRunner {
 
@@ -225,6 +226,36 @@ class DataInitializer(
                     )
                 )
             }
+        }
+
+        // Delivery options (only if none exist)
+        if (deliveryOptionRepository.count() == 0L) {
+            deliveryOptionRepository.save(
+                DeliveryOption(
+                name = "Pickup point",
+                type = DeliveryType.PICKUP,
+                price = BigDecimal.ZERO,
+                estimatedDays = 3,
+                addressLine = "123 Main St",
+                city = "New York",
+                region = "NY",
+                zipCode = "10001",
+                country = "USA",
+                active = true
+            )
+        )
+        deliveryOptionRepository.save(
+            DeliveryOption(
+                name = "Courier",
+                type = DeliveryType.COURIER,
+                price = BigDecimal("9.99"),
+                estimatedDays = 2,
+                city = "New York",
+                region = "NY",
+                country = "USA",
+                active = true
+            )
+        )
         }
 
         println("✅ Test data initialized successfully!")

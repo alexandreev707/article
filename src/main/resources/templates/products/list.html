@@ -6,16 +6,16 @@
 <body>
     <div th:fragment="content">
         <div class="container py-8">
-            <h1 class="text-3xl font-bold mb-8 text-gray-900">Каталог товаров</h1>
+            <h1 class="text-3xl font-bold mb-8 text-gray-900">Product Catalog</h1>
 
             <!-- Filters -->
             <div class="card mb-8">
                 <form id="filterForm" method="get" action="/products" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Категория</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
                             <select name="category" class="form-input">
-                                <option value="">Все категории</option>
+                                <option value="">All categories</option>
                                 <option th:each="cat : ${categories}" 
                                         th:value="${cat}" 
                                         th:text="${cat}"
@@ -23,32 +23,32 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Цена от</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Price from</label>
                             <input type="number" name="minPrice" step="0.01" 
                                    th:value="${filter?.minPrice}"
                                    placeholder="0.00"
                                    class="form-input">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Цена до</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Price to</label>
                             <input type="number" name="maxPrice" step="0.01" 
                                    th:value="${filter?.maxPrice}"
                                    placeholder="9999.99"
                                    class="form-input">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Сортировка</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Sort by</label>
                             <select name="sortBy" class="form-input">
-                                <option value="createdAt" th:selected="${filter?.sortBy == 'createdAt'}">По дате</option>
-                                <option value="price" th:selected="${filter?.sortBy == 'price'}">По цене</option>
-                                <option value="rating" th:selected="${filter?.sortBy == 'rating'}">По рейтингу</option>
-                                <option value="reviewCount" th:selected="${filter?.sortBy == 'reviewCount'}">По отзывам</option>
+                                <option value="createdAt" th:selected="${filter?.sortBy == 'createdAt'}">By date</option>
+                                <option value="price" th:selected="${filter?.sortBy == 'price'}">By price</option>
+                                <option value="rating" th:selected="${filter?.sortBy == 'rating'}">By rating</option>
+                                <option value="reviewCount" th:selected="${filter?.sortBy == 'reviewCount'}">By reviews</option>
                             </select>
                         </div>
                     </div>
                     <div>
                         <button type="submit" class="btn-primary">
-                            Применить фильтры
+                            Apply filters
                         </button>
                     </div>
                 </form>
@@ -62,12 +62,12 @@
                             <img th:if="${product.images != null and !product.images.isEmpty()}" 
                                  th:src="${product.images[0]}" 
                                  alt="Product image"
-                                 onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>Нет фото</div>'">
+                                 onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>No photo</div>'">
                             <div th:unless="${product.images != null and !product.images.isEmpty()}" 
                                  class="image-placeholder h-full">
-                                Нет фото
+                                No photo
                             </div>
-                            <div th:if="${product.stock == 0}" class="product-card-badge">Нет в наличии</div>
+                            <div th:if="${product.stock == 0}" class="product-card-badge">Out of stock</div>
                         </div>
                         <div class="product-card-content">
                             <h3 class="product-card-title" th:text="${product.title}">Product Title</h3>
@@ -85,18 +85,18 @@
             </div>
             
             <div th:if="${products == null or products.isEmpty()}" class="text-center py-12 text-gray-500">
-                <p>Товары не найдены</p>
+                <p>No products found</p>
             </div>
 
             <!-- Pagination -->
             <div class="mt-12 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
                 <a th:if="${currentPage > 0}" 
                    th:href="@{/products(page=${currentPage - 1}, category=${filter?.category}, minPrice=${filter?.minPrice}, maxPrice=${filter?.maxPrice}, sortBy=${filter?.sortBy})}"
-                   class="btn-secondary px-6 py-2">← Назад</a>
-                <span class="text-gray-600 font-medium" th:text="'Страница ' + (${currentPage} + 1) + ' из ' + ${totalPages}">Страница 1 из 1</span>
+                   class="btn-secondary px-6 py-2">← Previous</a>
+                <span class="text-gray-600 font-medium" th:text="'Page ' + (${currentPage} + 1) + ' of ' + ${totalPages}">Page 1 of 1</span>
                 <a th:if="${currentPage < totalPages - 1}" 
                    th:href="@{/products(page=${currentPage + 1}, category=${filter?.category}, minPrice=${filter?.minPrice}, maxPrice=${filter?.maxPrice}, sortBy=${filter?.sortBy})}"
-                   class="btn-secondary px-6 py-2">Вперед →</a>
+                   class="btn-secondary px-6 py-2">Next →</a>
             </div>
         </div>
     </div>

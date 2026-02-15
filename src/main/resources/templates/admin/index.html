@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
 <head>
-    <title>Панель администратора - Marketplace</title>
+    <title>Admin Dashboard - Marketplace</title>
 </head>
 <body>
     <div th:fragment="content">
         <div class="container py-8">
-            <h1 class="text-3xl font-bold mb-8 text-gray-900">Панель администратора</h1>
+            <h1 class="text-3xl font-bold mb-8 text-gray-900">Admin Dashboard</h1>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <a th:href="@{/admin/users}" class="card hover:shadow-lg transition-all slide-up">
@@ -14,11 +14,11 @@
                         <div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-2xl mr-4">
                             👥
                         </div>
-                        <h2 class="text-xl font-semibold text-gray-900">Пользователи</h2>
+                        <h2 class="text-xl font-semibold text-gray-900">Users</h2>
                     </div>
-                    <p class="text-gray-600 mb-4">Управление пользователями и правами доступа</p>
+                    <p class="text-gray-600 mb-4">User management and access control</p>
                     <span class="text-primary font-semibold inline-flex items-center">
-                        Перейти → 
+                        Open → 
                     </span>
                 </a>
                 
@@ -27,11 +27,11 @@
                         <div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-2xl mr-4">
                             📦
                         </div>
-                        <h2 class="text-xl font-semibold text-gray-900">Товары</h2>
+                        <h2 class="text-xl font-semibold text-gray-900">Products</h2>
                     </div>
-                    <p class="text-gray-600 mb-4">Модерация товаров и контента</p>
+                    <p class="text-gray-600 mb-4">Product moderation and content</p>
                     <span class="text-primary font-semibold inline-flex items-center">
-                        Перейти → 
+                        Open → 
                     </span>
                 </a>
                 
@@ -40,11 +40,11 @@
                         <div class="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-2xl mr-4">
                             🛒
                         </div>
-                        <h2 class="text-xl font-semibold text-gray-900">Заказы</h2>
+                        <h2 class="text-xl font-semibold text-gray-900">Orders</h2>
                     </div>
-                    <p class="text-gray-600 mb-4">Мониторинг всех заказов</p>
+                    <p class="text-gray-600 mb-4">Monitor all orders</p>
                     <span class="text-primary font-semibold inline-flex items-center">
-                        Перейти → 
+                        Open → 
                     </span>
                 </a>
             </div>

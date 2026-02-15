@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
 <head>
-    <title>Управление пользователями - Marketplace</title>
+    <title>User Management - Marketplace</title>
 </head>
 <body>
     <div th:fragment="content">
         <div class="container py-8">
-            <h1 class="text-3xl font-bold mb-8 text-gray-900">Управление пользователями</h1>
+            <h1 class="text-3xl font-bold mb-8 text-gray-900">User Management</h1>
 
             <div class="table-container" th:if="${users != null and !users.isEmpty()}">
                 <table>
@@ -14,10 +14,10 @@
                         <tr>
                             <th>ID</th>
                             <th>Email</th>
-                            <th>Имя</th>
-                            <th>Роли</th>
-                            <th>Статус</th>
-                            <th>Действия</th>
+                            <th>Name</th>
+                            <th>Roles</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -33,24 +33,24 @@
                                 </div>
                             </td>
                             <td>
-                                <span th:if="${user.blocked}" class="badge badge-danger">Заблокирован</span>
-                                <span th:unless="${user.blocked}" class="badge badge-success">Активен</span>
+                                <span th:if="${user.blocked}" class="badge badge-danger">Blocked</span>
+                                <span th:unless="${user.blocked}" class="badge badge-success">Active</span>
                             </td>
                             <td>
                                 <div class="flex flex-wrap gap-2">
                                     <button th:if="${!user.blocked}" 
                                             th:onclick="'blockUser(\'' + ${user.id} + '\')'"
                                             class="text-xs px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded transition-colors">
-                                        Заблокировать
+                                        Block
                                     </button>
                                     <button th:if="${user.blocked}" 
                                             th:onclick="'unblockUser(\'' + ${user.id} + '\')'"
                                             class="text-xs px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded transition-colors">
-                                        Разблокировать
+                                        Unblock
                                     </button>
                                     <button th:onclick="'grantRole(\'' + ${user.id} + '\', \'ROLE_SELLER\')'"
                                             class="text-xs px-3 py-1 bg-primary hover:bg-primary-dark text-white rounded transition-colors">
-                                        Сделать продавцом
+                                        Make seller
                                     </button>
                                 </div>
                             </td>
@@ -60,18 +60,18 @@
             </div>
             
             <div th:if="${users == null or users.isEmpty()}" class="text-center py-12 text-gray-500">
-                <p>Пользователи не найдены</p>
+                <p>No users found</p>
             </div>
 
             <!-- Pagination -->
             <div class="mt-8 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
                 <a th:if="${currentPage > 0}" 
                    th:href="@{/admin/users(page=${currentPage - 1})}"
-                   class="btn-secondary px-6 py-2">← Назад</a>
-                <span class="text-gray-600 font-medium" th:text="'Страница ' + (${currentPage} + 1) + ' из ' + ${totalPages}">Страница 1 из 1</span>
+                   class="btn-secondary px-6 py-2">← Previous</a>
+                <span class="text-gray-600 font-medium" th:text="'Page ' + (${currentPage} + 1) + ' of ' + ${totalPages}">Page 1 of 1</span>
                 <a th:if="${currentPage < totalPages - 1}" 
                    th:href="@{/admin/users(page=${currentPage + 1})}"
-                   class="btn-secondary px-6 py-2">Вперед →</a>
+                   class="btn-secondary px-6 py-2">Next →</a>
             </div>
         </div>
 

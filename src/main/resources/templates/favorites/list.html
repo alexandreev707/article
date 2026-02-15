@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
 <head>
-    <title>Избранное - Marketplace</title>
+    <title>Favorites - Marketplace</title>
 </head>
 <body>
 <div th:fragment="content">
     <div class="container py-8">
-        <h1 class="text-3xl font-bold mb-8 text-gray-900">❤️ Избранное</h1>
+        <h1 class="text-3xl font-bold mb-8 text-gray-900">❤️ Favorites</h1>
 
         <div id="favoritesContainer" class="product-grid">
             <div class="text-center py-12 col-span-full">
                 <div class="spinner"></div>
-                <p class="text-gray-500 mt-4">Загрузка избранного...</p>
+                <p class="text-gray-500 mt-4">Loading favorites...</p>
             </div>
         </div>
 
         <div id="pagination" class="mt-8 flex justify-center items-center gap-4 hidden">
-            <button id="prevPage" class="btn-secondary px-6 py-2">← Назад</button>
-            <span id="pageInfo" class="text-gray-600 font-medium">Страница 1 из 1</span>
-            <button id="nextPage" class="btn-secondary px-6 py-2">Вперед →</button>
+            <button id="prevPage" class="btn-secondary px-6 py-2">← Previous</button>
+            <span id="pageInfo" class="text-gray-600 font-medium">Page 1 of 1</span>
+            <button id="nextPage" class="btn-secondary px-6 py-2">Next →</button>
         </div>
     </div>
 
@@ -31,7 +31,7 @@
                 const response = await fetch(`/api/favorites?page=${currentPage}&size=${pageSize}`);
                 const data = await response.json();
 
-                console.log('❤️ Избранное:', data);
+                console.log('❤️ Favorites:', data);
 
                 const container = document.getElementById('favoritesContainer');
                 const pagination = document.getElementById('pagination');
@@ -43,8 +43,8 @@
                     container.innerHTML = `
                     <div class="col-span-full text-center py-16 text-gray-500">
                         <div class="text-6xl mb-4">❤️</div>
-                        <p class="text-xl mb-2">Избранное пусто</p>
-                        <p class="text-lg">Добавьте товары, нажав ❤️ на странице товара</p>
+                        <p class="text-xl mb-2">Favorites are empty</p>
+                        <p class="text-lg">Add products by clicking ❤️ on the product page</p>
                     </div>
                 `;
                     if (pagination) pagination.classList.add('hidden');
@@ -57,9 +57,9 @@
                         <div class="product-card-image">
                             <img src="${product.images?.[0] || '/img/placeholder.jpg'}"
                                  alt="${product.title}"
-                                 onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>Нет фото</div>'">
+                                 onerror="this.parentElement.innerHTML='<div class=\'image-placeholder h-full\'>No photo</div>'">
                             <div class="product-card-badge bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                                ❤️ Избранное
+                                ❤️ Favorite
                             </div>
                         </div>
                         <div class="product-card-content">
@@ -74,7 +74,7 @@
                         </a>
                         <button onclick="removeFromFavorites(${product.id})"
                                 class="btn-danger w-full mt-2 text-sm py-2">
-                            Удалить из избранного
+                            Remove from favorites
                         </button>
                     </div>
                 </div>
@@ -82,7 +82,7 @@
 
                 if (pagination) {
                     document.getElementById('pageInfo').textContent =
-                        `Страница ${currentPage + 1} из ${totalPages}`;
+                        `Page ${currentPage + 1} of ${totalPages}`;
 
                     document.getElementById('prevPage').disabled = currentPage === 0;
                     document.getElementById('nextPage').disabled = currentPage >= totalPages - 1;
@@ -90,9 +90,9 @@
                 }
 
             } catch (error) {
-                console.error('❌ Ошибка избранного:', error);
+                console.error('❌ Favorites error:', error);
                 document.getElementById('favoritesContainer').innerHTML =
-                    '<p class="text-center py-12 text-red-500">Ошибка загрузки избранного</p>';
+                    '<p class="text-center py-12 text-red-500">Failed to load favorites</p>';
             }
         }
 
@@ -102,10 +102,10 @@
                     method: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content }
                 });
-                showToast('✅ Удалено из избранного!', 'success');
-                loadFavorites(); // Перезагрузить
+                showToast('✅ Removed from favorites!', 'success');
+                loadFavorites(); // Reload
             } catch (error) {
-                showToast('❌ Ошибка удаления', 'error');
+                showToast('❌ Remove failed', 'error');
             }
         }
 

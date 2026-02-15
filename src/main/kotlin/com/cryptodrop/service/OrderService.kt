@@ -1,6 +1,7 @@
 package com.cryptodrop.service
 
 import com.cryptodrop.dto.AddressDto
+import com.cryptodrop.dto.CheckoutDto
 import com.cryptodrop.dto.OrderCreateDto
 import com.cryptodrop.dto.OrderResponseDto
 import com.cryptodrop.dto.OrderStatusUpdateDto
@@ -22,7 +23,9 @@ import java.time.format.DateTimeFormatter
 class OrderService(
     private val orderRepository: OrderRepository,
     private val productRepository: ProductRepository,
-    private val productService: ProductService
+    private val productService: ProductService,
+    private val cartService: CartService,
+    private val deliveryOptionService: com.cryptodrop.service.DeliveryOptionService
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
@@ -87,6 +90,69 @@ class OrderService(
         return orderRepository.save(updatedOrder)
     }
 
+    @Transactional
+    fun createOrdersFromCart(buyerId: Long, dto: CheckoutDto): List<Order> {
+        val cart = cartService.getCart(buyerId)
+        if (cart.items.isEmpty()) throw IllegalStateException("Cart is empty")
+
+        val delivery = deliveryOptionService.findById(dto.deliveryOptionId)
+        val address = if (dto.shippingAddress != null) {
+            Address(
+                street = dto.shippingAddress.street,
+                city = dto.shippingAddress.city,
+                state = dto.shippingAddress.state,
+                zipCode = dto.shippingAddress.zipCode,
+                country = dto.shippingAddress.country
+            )
+        } else {
+            Address(
+                street = delivery.addressLine ?: "",
+                city = delivery.city ?: "",
+                state = delivery.region ?: "",
+                zipCode = delivery.zipCode ?: "",
+                country = delivery.country ?: ""
+            )
+        }
+
+        val totalDiscount = dto.discountAmount ?: BigDecimal.ZERO
+        val subtotal = cart.subtotal
+        val orders = mutableListOf<Order>()
+
+        for (item in cart.items) {
+            val product = productRepository.findById(item.productId)
+                .orElseThrow { IllegalArgumentException("Product not found: ${item.productId}") }
+            if (!product.active) throw IllegalStateException("Product ${product.title} is not available")
+            if (product.stock < item.quantity) throw IllegalStateException("Insufficient stock for ${product.title}")
+
+            val itemSubtotal = product.price.multiply(BigDecimal(item.quantity))
+            val itemDiscount = if (subtotal > BigDecimal.ZERO && totalDiscount > BigDecimal.ZERO) {
+                itemSubtotal.multiply(totalDiscount).divide(subtotal, 2, java.math.RoundingMode.HALF_UP)
+            } else BigDecimal.ZERO
+            val totalPrice = itemSubtotal.subtract(itemDiscount)
+
+            val order = Order(
+                buyerId = buyerId,
+                sellerId = product.sellerId,
+                productId = product.id!!,
+                quantity = item.quantity,
+                totalPrice = totalPrice,
+                discountAmount = if (itemDiscount > BigDecimal.ZERO) itemDiscount else null,
+                shippingAddress = address
+            )
+            orders.add(orderRepository.save(order))
+
+            val updatedProduct = product.copy(
+                stock = product.stock - item.quantity,
+                updatedAt = LocalDateTime.now()
+            )
+            productRepository.save(updatedProduct)
+        }
+
+        cart.items.forEach { cartService.removeItem(buyerId, it.productId) }
+        logger.info("Created ${orders.size} orders from cart for buyer: $buyerId")
+        return orders
+    }
+
     fun findByBuyer(buyerId: Long, pageable: Pageable): Page<Order> {
         return orderRepository.findByBuyerId(buyerId, pageable)
     }
@@ -110,6 +176,7 @@ class OrderService(
             productTitle = product,
             quantity = order.quantity,
             totalPrice = order.totalPrice,
+            discountAmount = order.discountAmount,
             status = order.status,
             shippingAddress = AddressDto(
                 street = order.shippingAddress.street,

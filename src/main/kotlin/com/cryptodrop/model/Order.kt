@@ -27,7 +27,10 @@ data class Order(
     
     @Enumerated(EnumType.STRING)
     val status: OrderStatus = OrderStatus.PENDING,
-    
+
+    @Column(precision = 19, scale = 2)
+    val discountAmount: BigDecimal? = null,
+
     @Embedded
     val shippingAddress: Address,
     

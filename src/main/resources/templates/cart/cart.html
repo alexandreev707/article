@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
+<head>
+    <title>Cart - Marketplace</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="container py-8">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Left: Cart items -->
+                <div class="flex-1">
+                    <h1 class="text-2xl font-bold text-gray-900 mb-4">Cart <span id="cartCountBadge" class="text-primary text-lg"></span></h1>
+                    <p class="text-sm text-gray-500 mb-4">Available for order</p>
+
+                    <div id="cartItems" class="space-y-4">
+                        <div class="text-center py-12">
+                            <div class="spinner"></div>
+                            <p class="text-gray-500 mt-4">Loading cart...</p>
+                        </div>
+                    </div>
+
+                    <div id="cartEmpty" class="hidden text-center py-16 bg-white rounded-xl border border-gray-200">
+                        <div class="text-6xl mb-4">🛒</div>
+                        <p class="text-xl text-gray-600 mb-2">Your cart is empty</p>
+                        <a href="/products" class="btn-primary inline-block mt-4">Browse catalog</a>
+                    </div>
+                </div>
+
+                <!-- Right: Summary -->
+                <div class="lg:w-96 flex-shrink-0">
+                    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6 sticky top-24">
+                        <a id="proceedToCheckout" href="/cart/checkout" class="btn-primary w-full py-3 text-center font-semibold mb-4 hidden">
+                            Proceed to checkout
+                        </a>
+                        <p class="text-gray-500 text-sm mb-4">Delivery method and time can be selected at checkout.</p>
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">Your cart</h2>
+                        <div id="cartSummary">
+                            <p class="text-gray-500 text-sm" id="summaryItems">0 items</p>
+                            <p class="text-xl font-bold text-primary mt-2" id="summarySubtotal">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:inline="javascript">
+            window.currentUser = /*[[${currentUser}]]*/ null;
+        </script>
+        <script th:src="@{/js/cart.js}"></script>
+    </div>
+</body>
+</html>

@@ -8,29 +8,35 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initButtons() {
+    const addToCartBtn = document.getElementById('addToCart');
     const buyBtn = document.getElementById('buyNow');
     const favBtn = document.getElementById('addToFavorites');
 
-    console.log('🔍 buyBtn:', buyBtn);
-    console.log('🔍 favBtn:', favBtn);
-    console.log('🔍 currentUser:', window.currentUser);
-
-    // КУПИТЬ
-    if (buyBtn && window.currentUser) {
-        buyBtn.style.border = '2px solid green'; // ✅ ЗЕЛЁНАЯ РАМКА
-        buyBtn.addEventListener('click', buyNow);
-        console.log('✅ КУПИТЬ подключена');
-    } else {
-        console.log('❌ КУПИТЬ:', buyBtn ? 'есть' : 'НЕТ', window.currentUser ? 'есть' : 'НЕТ');
+    if (addToCartBtn && window.currentUser) {
+        addToCartBtn.addEventListener('click', addToCart);
     }
-
-    // ИЗБРАННОЕ
+    if (buyBtn && window.currentUser) {
+        buyBtn.addEventListener('click', buyNow);
+    }
     if (favBtn && window.currentUser) {
-        favBtn.style.border = '2px solid blue'; // ✅ СИНЯЯ РАМКА
         favBtn.addEventListener('click', toggleFavorite);
-        console.log('✅ ИЗБРАННОЕ подключена');
-    } else {
-        console.log('❌ ИЗБРАННОЕ:', favBtn ? 'есть' : 'НЕТ', window.currentUser ? 'есть' : 'НЕТ');
+    }
+}
+
+async function addToCart() {
+    const btn = document.getElementById('addToCart');
+    if (!btn || !window.productData) return;
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+    try {
+        await apiCall('/api/cart/items', 'POST', { productId: parseInt(window.productData.id), quantity: 1 });
+        showToast('Added to cart', 'success');
+        btn.textContent = 'Add to cart';
+    } catch (e) {
+        showToast(e.message || 'Failed to add to cart', 'error');
+        btn.textContent = 'Add to cart';
+    } finally {
+        btn.disabled = false;
     }
 }
 

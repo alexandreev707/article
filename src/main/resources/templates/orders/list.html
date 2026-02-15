@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
 <head>
-    <title>Мои заказы - Marketplace</title>
+    <title>My Orders - Marketplace</title>
 </head>
 <body>
 <div th:fragment="content">
     <div class="container py-8">
-        <h1 class="text-3xl font-bold mb-8 text-gray-900">Мои заказы</h1>
+        <h1 class="text-3xl font-bold mb-8 text-gray-900">My Orders</h1>
 
         <div id="ordersContainer" class="table-container">
             <div class="text-center py-12">
                 <div class="spinner"></div>
-                <p class="text-gray-500 mt-4">Загрузка заказов...</p>
+                <p class="text-gray-500 mt-4">Loading orders...</p>
             </div>
         </div>
 
-        <!-- ✅ ПАГИНАЦИЯ ДОБАВЛЕНА -->
+        <!-- ✅ PAGINATION ADDED -->
         <div id="pagination" class="mt-8 flex justify-center items-center gap-4 hidden">
-            <button id="prevPage" class="btn-secondary px-6 py-2">← Назад</button>
-            <span id="pageInfo" class="text-gray-600 font-medium">Страница 1 из 1</span>
-            <button id="nextPage" class="btn-secondary px-6 py-2">Вперед →</button>
+            <button id="prevPage" class="btn-secondary px-6 py-2">← Previous</button>
+            <span id="pageInfo" class="text-gray-600 font-medium">Page 1 of 1</span>
+            <button id="nextPage" class="btn-secondary px-6 py-2">Next →</button>
         </div>
     </div>
 
@@ -35,35 +35,33 @@
                 const response = await fetch(`/api/orders?page=${currentPage}&size=${pageSize}`);
                 const data = await response.json();
 
-                console.log('📥 Данные:', data);
+                console.log('📥 Data:', data);
 
-                // ✅ ФИКС: Spring Page
+                // ✅ FIX: Spring Page
                 const orders = data.orders?.content || data.orders || [];
                 const totalPages = data.totalPages || data.orders?.totalPages || 1;
 
                 if (orders.length === 0) {
-                    container.innerHTML = '<p class="text-center py-12 text-gray-500">У вас пока нет заказов</p>';
+                    container.innerHTML = '<p class="text-center py-12 text-gray-500">You have no orders yet</p>';
                     if (pagination) pagination.classList.add('hidden');
                     return;
                 }
 
-                // ✅ ТАБЛИЦА
+                // ✅ TABLE
                 container.innerHTML = `
                 <table>
                     <thead>
                         <tr>
-                            <th>Номер заказа</th>
-                            <th>Товар</th>
-                            <th>Количество</th>
-                            <th>Сумма</th>
-                            <th>Статус</th>
-                            <th>Дата</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${orders.map(order => `
                             <tr>
-                                <td class="font-mono text-xs">${order.id.toString().slice(0,8)}...</td>
                                 <td class="font-medium">${order.productTitle}</td>
                                 <td>${order.quantity}</td>
                                 <td class="font-bold text-primary">$${Number(order.totalPrice).toFixed(2)}</td>
@@ -76,17 +74,17 @@
                                         ${order.status}
                                     </span>
                                 </td>
-                                <td class="text-gray-500 text-sm">${new Date(order.createdAt).toLocaleDateString('ru-RU')}</td>
+                                <td class="text-gray-500 text-sm">${new Date(order.createdAt).toLocaleDateString('en-US')}</td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             `;
 
-                // ✅ ПАГИНАЦИЯ (с проверкой)
+                // ✅ PAGINATION (with checks)
                 if (pagination && document.getElementById('pageInfo')) {
                     document.getElementById('pageInfo').textContent =
-                        `Страница ${data.currentPage + 1} из ${totalPages}`;
+                        `Page ${data.currentPage + 1} of ${totalPages}`;
 
                     const prevBtn = document.getElementById('prevPage');
                     const nextBtn = document.getElementById('nextPage');
@@ -98,15 +96,15 @@
                 }
 
             } catch (error) {
-                console.error('❌ Ошибка:', error);
-                container.innerHTML = '<p class="text-center py-12 text-red-500">Ошибка загрузки заказов</p>';
+                console.error('❌ Error:', error);
+                container.innerHTML = '<p class="text-center py-12 text-red-500">Failed to load orders</p>';
             }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             loadOrders();
 
-            // ✅ ПРОВЕРКА ЭЛЕМЕНТОВ
+            // ✅ ELEMENT CHECKS
             const prevBtn = document.getElementById('prevPage');
             const nextBtn = document.getElementById('nextPage');
 
