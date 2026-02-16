@@ -1,15 +1,16 @@
 package com.cryptodrop.service
 
-import com.cryptodrop.dto.AddressDto
-import com.cryptodrop.dto.CheckoutDto
-import com.cryptodrop.dto.OrderCreateDto
-import com.cryptodrop.dto.OrderResponseDto
-import com.cryptodrop.dto.OrderStatusUpdateDto
-import com.cryptodrop.model.Address
-import com.cryptodrop.model.Order
-import com.cryptodrop.model.OrderStatus
-import com.cryptodrop.repository.OrderRepository
-import com.cryptodrop.repository.ProductRepository
+import com.cryptodrop.persistence.order.Address
+import com.cryptodrop.persistence.order.Order
+import com.cryptodrop.persistence.order.OrderItem
+import com.cryptodrop.persistence.order.OrderRepository
+import com.cryptodrop.persistence.order.OrderStatus
+import com.cryptodrop.persistence.product.ProductRepository
+import com.cryptodrop.service.dto.AddressDto
+import com.cryptodrop.service.dto.CheckoutDto
+import com.cryptodrop.service.dto.OrderCreateDto
+import com.cryptodrop.service.dto.OrderResponseDto
+import com.cryptodrop.service.dto.OrderStatusUpdateDto
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -18,170 +19,183 @@ import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 @Service
 class OrderService(
     private val orderRepository: OrderRepository,
     private val productRepository: ProductRepository,
     private val productService: ProductService,
+    private val userService: UserService,
     private val cartService: CartService,
-    private val deliveryOptionService: com.cryptodrop.service.DeliveryOptionService
+    private val deliveryOptionService: DeliveryOptionService
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
+    private fun toAddress(dto: AddressDto) = Address(
+        addressLine = dto.street,
+        city = dto.city,
+        region = dto.state,
+        zipCode = dto.zipCode,
+        country = dto.country
+    )
+
+    private fun orderNumber() = "ORD-${System.currentTimeMillis()}"
+
     @Transactional
-    fun createOrder(buyerId: Long, dto: OrderCreateDto): Order {
-        val product = productRepository.findById(dto.productId.toLong())
+    fun createOrder(buyerId: UUID, dto: OrderCreateDto): Order {
+        val product = productRepository.findById(UUID.fromString(dto.productId))
             .orElseThrow { IllegalArgumentException("Product not found: ${dto.productId}") }
+        if (!product.active) throw IllegalStateException("Product is not available")
+        if (product.stock < dto.quantity) throw IllegalStateException("Insufficient stock")
 
-        if (!product.active) {
-            throw IllegalStateException("Product is not available")
-        }
-
-        if (product.stock < dto.quantity) {
-            throw IllegalStateException("Insufficient stock")
-        }
-
-        val totalPrice = product.price.multiply(BigDecimal.valueOf(dto.quantity.toLong()))
-        val address = Address(
-            street = dto.shippingAddress.street,
-            city = dto.shippingAddress.city,
-            state = dto.shippingAddress.state,
-            zipCode = dto.shippingAddress.zipCode,
-            country = dto.shippingAddress.country
-        )
+        val buyer = userService.findById(buyerId)
+        val unitPrice = product.discountPrice ?: product.price
+        val totalPrice = unitPrice.multiply(BigDecimal.valueOf(dto.quantity.toLong()))
+        val address = toAddress(dto.shippingAddress)
 
         val order = Order(
-            buyerId = buyerId,
-            sellerId = product.sellerId,
-            productId = product.id!!,
-            quantity = dto.quantity,
+            orderNumber = orderNumber(),
+            buyer = buyer,
+            items = mutableListOf(),
+            subtotal = totalPrice,
             totalPrice = totalPrice,
             shippingAddress = address
         )
+        val orderItem = OrderItem(
+            order = order,
+            product = product,
+            seller = product.seller,
+            quantity = dto.quantity,
+            unitPrice = unitPrice,
+            totalPrice = totalPrice
+        )
+        order.items.add(orderItem)
 
-        // Update product stock
-        val updatedProduct = product.copy(
+        productRepository.save(product.copy(
             stock = product.stock - dto.quantity,
             updatedAt = LocalDateTime.now()
-        )
-        productRepository.save(updatedProduct)
+        ))
 
         logger.info("Order created: ${order.id} by buyer: $buyerId")
         return orderRepository.save(order)
     }
 
     @Transactional
-    fun updateOrderStatus(orderId: Long, sellerId: Long, dto: OrderStatusUpdateDto): Order {
+    fun updateOrderStatus(orderId: UUID, sellerId: UUID, dto: OrderStatusUpdateDto): Order {
         val order = orderRepository.findById(orderId)
             .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
+        val hasSellerItem = order.items.any { it.seller.id == sellerId }
+        if (!hasSellerItem) throw IllegalStateException("Only order seller can update status")
 
-        if (order.sellerId != sellerId) {
-            throw IllegalStateException("Only order seller can update status")
-        }
-
-        val updatedOrder = order.copy(
-            status = dto.status,
-            updatedAt = LocalDateTime.now()
-        )
-
+        order.status = dto.status
+        order.updatedAt = LocalDateTime.now()
         logger.info("Order status updated: $orderId to ${dto.status}")
-        return orderRepository.save(updatedOrder)
+        return orderRepository.save(order)
     }
 
     @Transactional
-    fun createOrdersFromCart(buyerId: Long, dto: CheckoutDto): List<Order> {
-        val cart = cartService.getCart(buyerId)
-        if (cart.items.isEmpty()) throw IllegalStateException("Cart is empty")
+    fun createOrdersFromCart(buyerId: UUID, dto: CheckoutDto): List<Order> {
+        val cartItems = cartService.getCartItems(buyerId)
+        if (cartItems.isEmpty()) throw IllegalStateException("Cart is empty")
 
-        val delivery = deliveryOptionService.findById(dto.deliveryOptionId)
-        val address = if (dto.shippingAddress != null) {
-            Address(
-                street = dto.shippingAddress.street,
-                city = dto.shippingAddress.city,
-                state = dto.shippingAddress.state,
-                zipCode = dto.shippingAddress.zipCode,
-                country = dto.shippingAddress.country
-            )
-        } else {
-            Address(
-                street = delivery.addressLine ?: "",
-                city = delivery.city ?: "",
-                state = delivery.region ?: "",
-                zipCode = delivery.zipCode ?: "",
-                country = delivery.country ?: ""
+        val delivery = deliveryOptionService.findById(UUID.fromString(dto.deliveryOptionId))
+        val address = when {
+            dto.shippingAddress != null -> toAddress(dto.shippingAddress)
+            else -> Address(
+                addressLine = delivery.pickupAddress ?: "",
+                city = "",
+                region = "",
+                zipCode = "",
+                country = ""
             )
         }
 
+        val subtotal = cartItems.sumOf { item ->
+            val p = item.product
+            (p.discountPrice ?: p.price).multiply(BigDecimal(item.quantity))
+        }
         val totalDiscount = dto.discountAmount ?: BigDecimal.ZERO
-        val subtotal = cart.subtotal
         val orders = mutableListOf<Order>()
 
-        for (item in cart.items) {
-            val product = productRepository.findById(item.productId)
-                .orElseThrow { IllegalArgumentException("Product not found: ${item.productId}") }
+        for (item in cartItems) {
+            val product = item.product
             if (!product.active) throw IllegalStateException("Product ${product.title} is not available")
             if (product.stock < item.quantity) throw IllegalStateException("Insufficient stock for ${product.title}")
 
-            val itemSubtotal = product.price.multiply(BigDecimal(item.quantity))
+            val itemSubtotal = (product.discountPrice ?: product.price).multiply(BigDecimal(item.quantity))
             val itemDiscount = if (subtotal > BigDecimal.ZERO && totalDiscount > BigDecimal.ZERO) {
                 itemSubtotal.multiply(totalDiscount).divide(subtotal, 2, java.math.RoundingMode.HALF_UP)
             } else BigDecimal.ZERO
             val totalPrice = itemSubtotal.subtract(itemDiscount)
+            val unitPrice = totalPrice.divide(BigDecimal(item.quantity), 2, java.math.RoundingMode.HALF_UP)
 
+            val buyer = userService.findById(buyerId)
             val order = Order(
-                buyerId = buyerId,
-                sellerId = product.sellerId,
-                productId = product.id!!,
-                quantity = item.quantity,
+                orderNumber = orderNumber(),
+                buyer = buyer,
+                items = mutableListOf(),
+                subtotal = totalPrice,
+                discountAmount = itemDiscount,
                 totalPrice = totalPrice,
-                discountAmount = if (itemDiscount > BigDecimal.ZERO) itemDiscount else null,
-                shippingAddress = address
+                shippingAddress = address,
+                deliveryOption = delivery
             )
-            orders.add(orderRepository.save(order))
+            val orderItem = OrderItem(
+                order = order,
+                product = product,
+                seller = product.seller,
+                quantity = item.quantity,
+                unitPrice = unitPrice,
+                totalPrice = totalPrice
+            )
+            order.items.add(orderItem)
 
-            val updatedProduct = product.copy(
+            productRepository.save(product.copy(
                 stock = product.stock - item.quantity,
                 updatedAt = LocalDateTime.now()
-            )
-            productRepository.save(updatedProduct)
+            ))
+
+            orders.add(orderRepository.save(order))
+            cartService.removeItem(buyerId, product.id!!)
         }
 
-        cart.items.forEach { cartService.removeItem(buyerId, it.productId) }
         logger.info("Created ${orders.size} orders from cart for buyer: $buyerId")
         return orders
     }
 
-    fun findByBuyer(buyerId: Long, pageable: Pageable): Page<Order> {
+    fun findByBuyer(buyerId: UUID, pageable: Pageable): Page<Order> {
         return orderRepository.findByBuyerId(buyerId, pageable)
     }
 
-    fun findBySeller(sellerId: Long, pageable: Pageable): Page<Order> {
+    fun findBySeller(sellerId: UUID, pageable: Pageable): Page<Order> {
         return orderRepository.findBySellerId(sellerId, pageable)
     }
 
-    fun findById(orderId: Long): Order {
+    fun findById(orderId: UUID): Order {
         return orderRepository.findById(orderId)
             .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
     }
 
     fun toDto(order: Order, productTitle: String? = null): OrderResponseDto {
-        val product = productTitle ?: productService.findById(order.productId).title
+        val item = order.items.firstOrNull()
+            ?: throw IllegalStateException("Order has no items")
+        val product = productTitle ?: item.product.title
         return OrderResponseDto(
             id = order.id.toString(),
-            buyerId = order.buyerId.toString(),
-            sellerId = order.sellerId.toString(),
-            productId = order.productId.toString(),
+            buyerId = order.buyer.id!!.toString(),
+            sellerId = item.seller.id!!.toString(),
+            productId = item.product.id!!.toString(),
             productTitle = product,
-            quantity = order.quantity,
-            totalPrice = order.totalPrice,
-            discountAmount = order.discountAmount,
+            quantity = item.quantity,
+            totalPrice = item.totalPrice,
+            discountAmount = order.discountAmount.takeIf { it > BigDecimal.ZERO },
             status = order.status,
             shippingAddress = AddressDto(
-                street = order.shippingAddress.street,
+                street = order.shippingAddress.addressLine,
                 city = order.shippingAddress.city,
-                state = order.shippingAddress.state,
+                state = order.shippingAddress.region,
                 zipCode = order.shippingAddress.zipCode,
                 country = order.shippingAddress.country
             ),

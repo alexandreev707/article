@@ -1,9 +1,9 @@
 package com.cryptodrop.service
 
-import com.cryptodrop.dto.UserResponseDto
-import com.cryptodrop.model.User
-import com.cryptodrop.model.UserRole
-import com.cryptodrop.repository.UserRepository
+import com.cryptodrop.persistence.user.User
+import com.cryptodrop.persistence.user.UserRepository
+import com.cryptodrop.persistence.user.UserRole
+import com.cryptodrop.service.dto.UserResponseDto
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.security.core.Authentication
@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 class UserService(
@@ -18,7 +19,6 @@ class UserService(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    // Security context methods
     fun getCurrentUser(): User? {
         return try {
             val authentication: Authentication? = SecurityContextHolder.getContext().authentication
@@ -33,7 +33,7 @@ class UserService(
         }
     }
 
-    fun getCurrentUserId(): Long? {
+    fun getCurrentUserId(): UUID? {
         return getCurrentUser()?.id
     }
 
@@ -54,9 +54,12 @@ class UserService(
         }
     }
 
-    // User management methods
+    fun isAdmin(userId: UUID): Boolean {
+        return findById(userId).roles.contains(UserRole.ADMIN)
+    }
+
     @Transactional
-    fun updateUserRoles(userId: Long, roles: Set<UserRole>): User {
+    fun updateUserRoles(userId: UUID, roles: Set<UserRole>): User {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found: $userId") }
         val updatedUser = user.copy(
@@ -66,41 +69,7 @@ class UserService(
         return userRepository.save(updatedUser)
     }
 
-    @Transactional
-    fun toggleFavorite(userId: Long, productId: Long): User {
-        val user = userRepository.findById(userId)
-            .orElseThrow { IllegalArgumentException("User not found: $userId") }
-        
-        val updatedFavorites = if (user.favoriteProductIds.contains(productId)) {
-            user.favoriteProductIds.apply { remove(productId) }
-        } else {
-            user.favoriteProductIds.apply { add(productId) }
-        }
-        
-        val updatedUser = user.copy(
-            favoriteProductIds = updatedFavorites,
-            updatedAt = LocalDateTime.now()
-        )
-        return userRepository.save(updatedUser)
-    }
-
-    fun addFavorite(userId: Long, productId: Long): User {
-        val user = findById(userId)
-        if (!user.favoriteProductIds.contains(productId)) {
-            user.favoriteProductIds.add(productId)
-            return userRepository.save(user)
-        }
-        return user
-    }
-
-    fun removeFavorite(userId: Long, productId: Long): User {
-        val user = findById(userId)
-        user.favoriteProductIds.remove(productId)
-        return userRepository.save(user)
-    }
-
-   // @Cacheable("users")
-    fun findById(userId: Long): User {
+    fun findById(userId: UUID): User {
         return userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found: $userId") }
     }

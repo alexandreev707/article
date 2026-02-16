@@ -28,10 +28,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-cache")
     
-    // H2 Database (in-memory)
-    runtimeOnly("com.h2database:h2")
+    // PostgreSQL
+    implementation("org.postgresql:postgresql:42.7.1")
+    implementation("org.flywaydb:flyway-core:10.6.0")
+    implementation("org.flywaydb:flyway-database-postgresql:10.6.0")
 
-    
     // WebSocket
     implementation("org.webjars:sockjs-client:1.5.1")
     implementation("org.webjars:stomp-websocket:2.3.4")
