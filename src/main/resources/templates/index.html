@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/layout}">
 <head>
     <title>Home - Marketplace</title>
 </head>
@@ -48,8 +48,8 @@
                             <button th:if="${currentUser != null}"
                                     type="button"
                                     class="product-card-favorite-btn"
-                                    th:classappend="${#lists.contains(currentUser.favoriteProductIds, product.id)} ? 'favorited' : ''"
-                                    th:attr="data-product-id=${product.id}, data-favorited=${#lists.contains(currentUser.favoriteProductIds, product.id)}"
+                                    th:classappend="${#lists.contains(favoriteProductIds, product.id)} ? 'favorited' : ''"
+                                    th:attr="data-product-id=${product.id}, data-favorited=${#lists.contains(favoriteProductIds, product.id)}"
                                     onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteCard(this.dataset.productId, this)"
                                     title="Add to favorites">
                                 <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -100,8 +100,8 @@
                             <button th:if="${currentUser != null}"
                                     type="button"
                                     class="product-card-favorite-btn"
-                                    th:classappend="${#lists.contains(currentUser.favoriteProductIds, product.id)} ? 'favorited' : ''"
-                                    th:attr="data-product-id=${product.id}, data-favorited=${#lists.contains(currentUser.favoriteProductIds, product.id)}"
+                                    th:classappend="${#lists.contains(favoriteProductIds, product.id)} ? 'favorited' : ''"
+                                    th:attr="data-product-id=${product.id}, data-favorited=${#lists.contains(favoriteProductIds, product.id)}"
                                     onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteCard(this.dataset.productId, this)"
                                     title="Add to favorites">
                                 <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -140,11 +140,11 @@
             <!-- Pagination -->
             <div class="mt-12 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
                 <a th:if="${currentPage > 0}"
-                   th:href="@{/(page=${currentPage - 1})}"
+                   th:href="@{/(page=${currentPage - 1}, size=12)}"
                    class="btn-secondary px-6 py-2">← Previous</a>
                 <span class="text-gray-600 font-medium" th:text="'Page ' + (${currentPage} + 1) + ' of ' + ${totalPages}">Page 1 of 1</span>
                 <a th:if="${currentPage < totalPages - 1}"
-                   th:href="@{/(page=${currentPage + 1})}"
+                   th:href="@{/(page=${currentPage + 1}, size=${12})}"
                    class="btn-secondary px-6 py-2">Next →</a>
             </div>
         </div>

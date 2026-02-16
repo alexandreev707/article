@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/layout}">
 <head>
     <title>User Management - Marketplace</title>
 </head>
@@ -29,7 +29,7 @@
                                 <div class="flex flex-wrap gap-1">
                                     <span th:each="role : ${user.roles}" 
                                           class="badge badge-info text-xs"
-                                          th:text="'ROLE_' + ${role.name()}">ROLE</span>
+                                          th:text="${role}">ROLE</span>
                                 </div>
                             </td>
                             <td>

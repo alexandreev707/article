@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="theme-color" content="#005BFF">
     <title th:text="${title ?: 'Marketplace'}">Marketplace</title>
-    
+
     <!-- Google Fonts - Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,11 +31,11 @@
             }
         }
     </script>
-    
+
     <!-- WebSocket -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
@@ -62,11 +62,11 @@
                         ❤️ Favorites
                     </a>
                     <a th:if="${currentUser != null}" th:href="@{/orders}" class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Orders</a>
-                    <a th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.model.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.model.UserRole).ADMIN))}" 
-                       th:href="@{/seller/products}" 
+                    <a th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).ADMIN))}"
+                       th:href="@{/seller/products}"
                        class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Seller</a>
-                    <a th:if="${currentUser != null and currentUser.roles.contains(T(com.cryptodrop.model.UserRole).ADMIN)}" 
-                       th:href="@{/admin}" 
+                    <a th:if="${currentUser != null and currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).ADMIN)}"
+                       th:href="@{/admin}"
                        class="text-gray-700 hover:text-primary font-medium text-sm transition-colors">Admin</a>
                 </div>
 
@@ -83,7 +83,7 @@
                             Sign out
                         </a>
                     </div>
-                    
+
                     <!-- Mobile Menu Button -->
                     <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 focus:outline-none">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,11 +105,11 @@
                         ❤️ Favorites
                     </a>
                     <a th:if="${currentUser != null}" th:href="@{/orders}" class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Orders</a>
-                    <a th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.model.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.model.UserRole).ADMIN))}" 
-                       th:href="@{/seller/products}" 
+                    <a th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).ADMIN))}"
+                       th:href="@{/seller/products}"
                        class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Seller</a>
-                    <a th:if="${currentUser != null and currentUser.roles.contains(T(com.cryptodrop.model.UserRole).ADMIN)}" 
-                       th:href="@{/admin}" 
+                    <a th:if="${currentUser != null and currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).ADMIN)}"
+                       th:href="@{/admin}"
                        class="px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">Admin</a>
                 </div>
             </div>
@@ -158,7 +158,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const mobileMenu = document.getElementById('mobileMenu');
-            
+
             if (mobileMenuBtn && mobileMenu) {
                 mobileMenuBtn.addEventListener('click', function() {
                     mobileMenu.classList.toggle('hidden');
