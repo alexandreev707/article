@@ -1,11 +1,13 @@
 package com.cryptodrop.service
 
-import com.cryptodrop.dto.ProductCreateDto
-import com.cryptodrop.dto.ProductFilterDto
-import com.cryptodrop.dto.ProductResponseDto
-import com.cryptodrop.dto.ProductUpdateDto
-import com.cryptodrop.model.Product
-import com.cryptodrop.repository.ProductRepository
+import com.cryptodrop.persistence.category.Category
+import com.cryptodrop.persistence.category.CategoryRepository
+import com.cryptodrop.persistence.product.Product
+import com.cryptodrop.persistence.product.ProductRepository
+import com.cryptodrop.service.dto.ProductCreateDto
+import com.cryptodrop.service.dto.ProductFilterDto
+import com.cryptodrop.service.dto.ProductResponseDto
+import com.cryptodrop.service.dto.ProductUpdateDto
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -15,29 +17,52 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 @Service
 class ProductService(
     private val productRepository: ProductRepository,
-    private val userService: UserService
+    private val categoryRepository: CategoryRepository,
+    private val userService: UserService,
+    private val wishlistService: WishlistService
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
+    private fun getOrCreateCategory(name: String): Category {
+        return categoryRepository.findByName(name)
+            .orElseGet {
+                val slug = name.lowercase().replace(" ", "-").replace(Regex("[^a-z0-9-]"), "")
+                categoryRepository.save(Category(name = name, slug = slug))
+            }
+    }
+
+    private fun slugFromTitle(title: String): String {
+        return title.lowercase()
+            .replace(Regex("[^a-z0-9\\s-]"), "")
+            .replace(Regex("\\s+"), "-")
+            .replace(Regex("-+"), "-")
+            .trim()
+    }
+
     @CacheEvict(value = ["products", "categories"], allEntries = true)
     @Transactional
-    fun createProduct(sellerId: Long, dto: ProductCreateDto): Product {
+    fun createProduct(sellerId: UUID, dto: ProductCreateDto): Product {
         logger.info("Creating product: ${dto.title} by seller: $sellerId")
+        val seller = userService.findById(sellerId)
+        val category = getOrCreateCategory(dto.category)
         val product = Product(
-            sellerId = sellerId,
+            seller = seller,
+            category = category,
             title = dto.title,
+            slug = slugFromTitle(dto.title),
             description = dto.description,
             price = dto.price,
-            category = dto.category,
             images = dto.images.toMutableList(),
-            attributes = dto.attributes,
+            attributes = dto.attributes.toMutableMap(),
             stock = dto.stock
         )
         return productRepository.save(product)
@@ -45,21 +70,22 @@ class ProductService(
 
     @CacheEvict(value = ["products"], allEntries = true)
     @Transactional
-    fun updateProduct(productId: Long, sellerId: Long, dto: ProductUpdateDto): Product {
+    fun updateProduct(productId: UUID, sellerId: UUID, dto: ProductUpdateDto): Product {
         val product = productRepository.findById(productId)
             .orElseThrow { IllegalArgumentException("Product not found: $productId") }
-        
-        if (product.sellerId != sellerId) {
+
+        if (product.seller.id != sellerId) {
             throw IllegalStateException("Only product owner can update it")
         }
 
+        val category = dto.category?.let { getOrCreateCategory(it) } ?: product.category
         val updatedProduct = product.copy(
             title = dto.title ?: product.title,
             description = dto.description ?: product.description,
             price = dto.price ?: product.price,
-            category = dto.category ?: product.category,
+            category = category,
             images = dto.images?.toMutableList() ?: product.images,
-            attributes = dto.attributes ?: product.attributes,
+            attributes = dto.attributes?.toMutableMap() ?: product.attributes,
             stock = dto.stock ?: product.stock,
             active = dto.active ?: product.active,
             updatedAt = LocalDateTime.now()
@@ -68,7 +94,7 @@ class ProductService(
     }
 
     @Cacheable("products")
-    fun findById(productId: Long): Product {
+    fun findById(productId: UUID): Product {
         return productRepository.findById(productId)
             .orElseThrow { IllegalArgumentException("Product not found: $productId") }
     }
@@ -77,12 +103,12 @@ class ProductService(
         return productRepository.findAllActive(pageable)
     }
 
-    fun findBySeller(sellerId: Long, pageable: Pageable): Page<Product> {
+    fun findBySeller(sellerId: UUID, pageable: Pageable): Page<Product> {
         return productRepository.findBySellerId(sellerId, pageable)
     }
 
     fun findByCategory(category: String, pageable: Pageable): Page<Product> {
-        return productRepository.findByCategory(category, pageable)
+        return productRepository.findByCategoryName(category, pageable)
     }
 
     fun searchProducts(filter: ProductFilterDto, page: Int, size: Int): Page<Product> {
@@ -92,9 +118,8 @@ class ProductService(
             "reviewCount" -> Sort.by(if (filter.sortOrder == "asc") Sort.Direction.ASC else Sort.Direction.DESC, "reviewCount")
             else -> Sort.by(if (filter.sortOrder == "asc") Sort.Direction.ASC else Sort.Direction.DESC, "createdAt")
         }
-        
         val pageable = PageRequest.of(page, size, sort)
-        
+
         return when {
             filter.category != null && filter.minPrice != null && filter.maxPrice != null -> {
                 productRepository.findByCategoryAndPriceBetween(
@@ -105,10 +130,13 @@ class ProductService(
                 )
             }
             filter.minRating != null -> {
-                productRepository.findByRatingGreaterThanEqual(filter.minRating, pageable)
+                productRepository.findByRatingGreaterThanEqual(
+                    BigDecimal.valueOf(filter.minRating),
+                    pageable
+                )
             }
             filter.category != null -> {
-                productRepository.findByCategory(filter.category, pageable)
+                productRepository.findByCategoryName(filter.category, pageable)
             }
             else -> {
                 productRepository.findAllActive(pageable)
@@ -120,7 +148,7 @@ class ProductService(
     fun getPopularCategories(limit: Int = 10): List<String> {
         val products = productRepository.findAllActive(PageRequest.of(0, 1000))
         return products.content
-            .groupBy { it.category }
+            .groupBy { it.category.name }
             .mapValues { it.value.size }
             .toList()
             .sortedByDescending { it.second }
@@ -128,51 +156,44 @@ class ProductService(
             .map { it.first }
     }
 
-    fun getRecommendedProducts(userId: Long?, limit: Int = 10): List<Product> {
-        val user = userId?.let { userService.findById(it) }
-        val favoriteCategories = user?.favoriteProductIds?.let { productIds ->
-            productRepository.findByIdIn(productIds.toList())
-                .map { it.category }
+    fun getRecommendedProducts(userId: UUID?, limit: Int = 10): List<Product> {
+        val favoriteIds = userId?.let { wishlistService.getFavoriteProductIds(it) } ?: emptyList()
+        val favoriteCategories = if (favoriteIds.isNotEmpty()) {
+            productRepository.findByIdIn(favoriteIds)
+                .map { it.category.name }
                 .distinct()
-        } ?: emptyList()
+        } else emptyList()
 
         return if (favoriteCategories.isNotEmpty()) {
             favoriteCategories.flatMap { category ->
-                productRepository.findByCategory(category, PageRequest.of(0, limit)).content
+                productRepository.findByCategoryName(category, PageRequest.of(0, limit)).content
             }.distinctBy { it.id }.take(limit)
         } else {
             productRepository.findAllActive(PageRequest.of(0, limit)).content
         }
     }
 
-    fun findByIds(ids: List<Long>, pageable: Pageable): List<ProductResponseDto> {
+    fun findByIds(ids: List<UUID>, pageable: Pageable): List<ProductResponseDto> {
         if (ids.isEmpty()) return emptyList()
-
         val products = productRepository.findByIdIn(ids)
-            // Сортируем по порядку ID из избранного
-            .sortedBy { ids.indexOf(it.id!!) }
-
-        // Пагинация на уровне сервиса
+            .sortedBy { ids.indexOf(it.id) }
         val start = (pageable.pageNumber * pageable.pageSize).coerceAtMost(products.size)
         val end = (start + pageable.pageSize).coerceAtMost(products.size)
-
-        return products.subList(start, end).map {
-            toDto(it, userService.findById(it.sellerId).username)
-        }
+        return products.subList(start, end).map { toDto(it, it.seller.username) }
     }
 
     fun toDto(product: Product, sellerName: String? = null): ProductResponseDto {
-        val seller = sellerName ?: userService.findById(product.sellerId).username
+        val seller = sellerName ?: product.seller.username
         return ProductResponseDto(
             id = product.id.toString(),
-            sellerId = product.sellerId.toString(),
+            sellerId = product.seller.id.toString(),
             sellerName = seller,
             title = product.title,
             description = product.description,
             price = product.price,
-            category = product.category,
+            category = product.category.name,
             images = product.images,
-            rating = product.rating,
+            rating = product.rating.toDouble(),
             reviewCount = product.reviewCount,
             attributes = product.attributes,
             stock = product.stock,

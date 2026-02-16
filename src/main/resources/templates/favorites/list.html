@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/layout}">
 <head>
     <title>Favorites - Marketplace</title>
 </head>
@@ -72,7 +72,7 @@
                                 </div>
                             </div>
                         </a>
-                        <button onclick="removeFromFavorites(${product.id})"
+                        <button onclick="removeFromFavorites('${product.id}')"
                                 class="btn-danger w-full mt-2 text-sm py-2">
                             Remove from favorites
                         </button>
@@ -98,9 +98,9 @@
 
         async function removeFromFavorites(productId) {
             try {
-                await fetch(`/api/users/${window.currentUser?.id}/${productId}/favorites`, {
+                await fetch(`/api/favorites/${productId}`, {
                     method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content }
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content || '' }
                 });
                 showToast('✅ Removed from favorites!', 'success');
                 loadFavorites(); // Reload

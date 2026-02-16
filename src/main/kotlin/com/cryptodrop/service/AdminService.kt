@@ -1,9 +1,9 @@
 package com.cryptodrop.service
 
-import com.cryptodrop.dto.UserUpdateDto
-import com.cryptodrop.model.User
-import com.cryptodrop.model.UserRole
-import com.cryptodrop.repository.UserRepository
+import com.cryptodrop.persistence.user.User
+import com.cryptodrop.persistence.user.UserRepository
+import com.cryptodrop.persistence.user.UserRole
+import com.cryptodrop.service.dto.UserUpdateDto
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.data.domain.Page
@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 class AdminService(
@@ -20,6 +21,11 @@ class AdminService(
 
     fun getAllUsers(pageable: Pageable): Page<User> {
         return userRepository.findAll(pageable)
+    }
+
+    fun getUserById(userId: UUID): User {
+        return userRepository.findById(userId)
+            .orElseThrow { IllegalArgumentException("User not found: $userId") }
     }
 
     fun getUsersByRole(role: UserRole, pageable: Pageable): Page<User> {
@@ -38,7 +44,7 @@ class AdminService(
 
     @CacheEvict(value = ["users"], allEntries = true)
     @Transactional
-    fun updateUser(userId: Long, dto: UserUpdateDto): User {
+    fun updateUser(userId: UUID, dto: UserUpdateDto): User {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found: $userId") }
 
@@ -52,28 +58,27 @@ class AdminService(
             updatedAt = LocalDateTime.now()
         )
 
-        logger.info("User updated by admin: $userId, roles: ${updatedUser.roles}, blocked: ${updatedUser.blocked}")
+        logger.info("User updated by admin: $userId")
         return userRepository.save(updatedUser)
     }
 
     @CacheEvict(value = ["users"], allEntries = true)
     @Transactional
-    fun blockUser(userId: Long): User {
+    fun blockUser(userId: UUID): User {
         return updateUser(userId, UserUpdateDto(blocked = true))
     }
 
     @CacheEvict(value = ["users"], allEntries = true)
     @Transactional
-    fun unblockUser(userId: Long): User {
+    fun unblockUser(userId: UUID): User {
         return updateUser(userId, UserUpdateDto(blocked = false))
     }
 
     @CacheEvict(value = ["users"], allEntries = true)
     @Transactional
-    fun grantRole(userId: Long, role: String): User {
+    fun grantRole(userId: UUID, role: String): User {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found: $userId") }
-
         val userRole = UserRole.valueOf(role.removePrefix("ROLE_").uppercase())
         val updatedRoles = user.roles.toMutableSet().apply { add(userRole) }
         return updateUser(userId, UserUpdateDto(roles = updatedRoles.map { "ROLE_${it.name}" }.toSet()))
@@ -81,10 +86,9 @@ class AdminService(
 
     @CacheEvict(value = ["users"], allEntries = true)
     @Transactional
-    fun revokeRole(userId: Long, role: String): User {
+    fun revokeRole(userId: UUID, role: String): User {
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("User not found: $userId") }
-
         val userRole = UserRole.valueOf(role.removePrefix("ROLE_").uppercase())
         val updatedRoles = user.roles.toMutableSet().apply { remove(userRole) }
         return updateUser(userId, UserUpdateDto(roles = updatedRoles.map { "ROLE_${it.name}" }.toSet()))

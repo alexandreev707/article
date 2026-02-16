@@ -1,31 +1,45 @@
 package com.cryptodrop.service
 
-import com.cryptodrop.dto.CartItemResponseDto
-import com.cryptodrop.dto.CartResponseDto
-import com.cryptodrop.model.CartItem
-import com.cryptodrop.model.Product
-import com.cryptodrop.repository.CartItemRepository
-import com.cryptodrop.repository.ProductRepository
+import com.cryptodrop.persistence.cart.Cart
+import com.cryptodrop.persistence.cart.CartRepository
+import com.cryptodrop.persistence.cartitem.CartItem
+import com.cryptodrop.persistence.cartitem.CartItemRepository
+import com.cryptodrop.persistence.product.Product
+import com.cryptodrop.persistence.product.ProductRepository
+import com.cryptodrop.service.dto.CartItemResponseDto
+import com.cryptodrop.service.dto.CartResponseDto
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 class CartService(
+    private val cartRepository: CartRepository,
     private val cartItemRepository: CartItemRepository,
     private val productRepository: ProductRepository,
-    private val productService: ProductService
+    private val userService: UserService
 ) {
 
-    fun getCart(userId: Long): CartResponseDto {
-        val items = cartItemRepository.findByUserId(userId)
+    private fun getOrCreateCart(userId: UUID): Cart {
+        return cartRepository.findByUserId(userId)
+            .orElseGet {
+                val user = userService.findById(userId)
+                cartRepository.save(Cart(user = user))
+            }
+    }
+
+    fun getCart(userId: UUID): CartResponseDto {
+        val cart = cartRepository.findByUserId(userId).orElse(null)
+            ?: return CartResponseDto(items = emptyList(), totalItems = 0, subtotal = BigDecimal.ZERO)
+        val items = cartItemRepository.findByCartId(cart.id!!)
         if (items.isEmpty()) {
             return CartResponseDto(items = emptyList(), totalItems = 0, subtotal = BigDecimal.ZERO)
         }
-        val productIds = items.map { it.productId }
-        val products = productRepository.findByIdIn(productIds).associateBy { it.id!! }
+        val products = productRepository.findByIdIn(items.map { it.product.id!! }).associateBy { it.id!! }
         val itemDtos = items.mapNotNull { item ->
-            val product = products[item.productId] ?: return@mapNotNull null
+            val product = products[item.product.id] ?: return@mapNotNull null
             toItemDto(item, product)
         }
         val subtotal = itemDtos.fold(BigDecimal.ZERO) { acc, dto ->
@@ -39,54 +53,76 @@ class CartService(
     }
 
     @Transactional
-    fun addItem(userId: Long, productId: Long, quantity: Int): CartItem {
+    fun addItem(userId: UUID, productId: UUID, quantity: Int): CartItem {
         val product = productRepository.findById(productId)
             .orElseThrow { IllegalArgumentException("Product not found: $productId") }
         if (!product.active) throw IllegalStateException("Product is not available")
         if (product.stock < quantity) throw IllegalStateException("Insufficient stock")
 
-        val existing = cartItemRepository.findByUserIdAndProductId(userId, productId)
-        return if (existing != null) {
-            val newQty = (existing.quantity + quantity).coerceAtMost(product.stock)
-            existing.quantity = newQty
-            cartItemRepository.save(existing)
+        val cart = getOrCreateCart(userId)
+        val existing = cartItemRepository.findByCartIdAndProductId(cart.id!!, productId)
+        return if (existing.isPresent) {
+            val item = existing.get()
+            val newQty = (item.quantity + quantity).coerceAtMost(product.stock)
+            item.quantity = newQty
+            cart.updatedAt = LocalDateTime.now()
+            cartRepository.save(cart)
+            cartItemRepository.save(item)
+            item
         } else {
-            cartItemRepository.save(
-                CartItem(userId = userId, productId = productId, quantity = quantity.coerceAtLeast(1))
-            )
+            val item = CartItem(cart = cart, product = product, quantity = quantity.coerceAtLeast(1))
+            cart.items.add(item)
+            cart.updatedAt = LocalDateTime.now()
+            cartRepository.save(cart)
+            cartItemRepository.save(item)
+            item
         }
     }
 
     @Transactional
-    fun updateQuantity(userId: Long, productId: Long, quantity: Int): CartItem {
-        val item = cartItemRepository.findByUserIdAndProductId(userId, productId)
-            ?: throw IllegalArgumentException("Cart item not found")
+    fun updateQuantity(userId: UUID, productId: UUID, quantity: Int): CartItem {
+        val cart = getOrCreateCart(userId)
+        val item = cartItemRepository.findByCartIdAndProductId(cart.id!!, productId)
+            .orElseThrow { IllegalArgumentException("Cart item not found") }
         val product = productRepository.findById(productId)
             .orElseThrow { IllegalArgumentException("Product not found: $productId") }
         val newQty = quantity.coerceIn(1, product.stock)
         item.quantity = newQty
+        cart.updatedAt = LocalDateTime.now()
+        cartRepository.save(cart)
         return cartItemRepository.save(item)
     }
 
     @Transactional
-    fun removeItem(userId: Long, productId: Long) {
-        cartItemRepository.deleteByUserIdAndProductId(userId, productId)
+    fun removeItem(userId: UUID, productId: UUID) {
+        val cart = cartRepository.findByUserId(userId).orElse(null) ?: return
+        val item = cartItemRepository.findByCartIdAndProductId(cart.id!!, productId).orElse(null) ?: return
+        cart.items.remove(item)
+        cartItemRepository.delete(item)
+        cart.updatedAt = LocalDateTime.now()
+        cartRepository.save(cart)
     }
 
-    fun getCartCount(userId: Long): Int {
-        return cartItemRepository.findByUserId(userId).sumOf { it.quantity }
+    fun getCartCount(userId: UUID): Int {
+        val cart = cartRepository.findByUserId(userId).orElse(null) ?: return 0
+        return cartItemRepository.findByCartId(cart.id!!).sumOf { it.quantity }
+    }
+
+    internal fun getCartItems(userId: UUID): List<CartItem> {
+        val cart = cartRepository.findByUserId(userId).orElse(null) ?: return emptyList()
+        return cartItemRepository.findByCartId(cart.id!!)
     }
 
     private fun toItemDto(item: CartItem, product: Product): CartItemResponseDto {
         return CartItemResponseDto(
-            cartItemId = item.id!!,
-            productId = product.id!!,
+            cartItemId = item.id!!.toString(),
+            productId = product.id!!.toString(),
             title = product.title,
             price = product.price,
             quantity = item.quantity,
             imageUrl = product.images.firstOrNull(),
             stock = product.stock,
-            sellerId = product.sellerId
+            sellerId = product.seller.id!!.toString()
         )
     }
 }

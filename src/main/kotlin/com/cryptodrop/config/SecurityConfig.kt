@@ -6,11 +6,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
-import org.springframework.security.core.userdetails.User
-import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
@@ -24,28 +21,6 @@ class SecurityConfig {
     }
 
     @Bean
-    fun userDetailsService(): UserDetailsService {
-        val passwordEncoder = passwordEncoder()
-
-        val customer = User.withUsername("customer")
-            .password(passwordEncoder.encode("password"))
-            .roles("CUSTOMER")
-            .build()
-
-        val seller = User.withUsername("seller")
-            .password(passwordEncoder.encode("password"))
-            .roles("SELLER", "CUSTOMER")
-            .build()
-
-        val admin = User.withUsername("admin")
-            .password(passwordEncoder.encode("password"))
-            .roles("ADMIN", "SELLER", "CUSTOMER")
-            .build()
-
-        return InMemoryUserDetailsManager(customer, seller, admin)
-    }
-
-    @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
@@ -53,7 +28,11 @@ class SecurityConfig {
                 requests
                     // ✅ СТАТИЧЕСКИЕ РЕСУРСЫ ПЕРВЫМИ - обязательно!
                     .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**").permitAll()
-                    .requestMatchers("/products/**", "/api/products/**").permitAll()
+                    .requestMatchers(
+                        "/products/**", "/api/products/**",
+                        "/api/categories", "/api/categories/*",
+                        "/api/delivery-options", "/api/delivery-options/*"
+                    ).permitAll()
                     .requestMatchers("/", "/login", "/logout", "/error", "/h2-console/**").permitAll()
 
                     // ✅ Роли после публичных ресурсов
