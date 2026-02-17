@@ -1,4 +1,7 @@
 spring:
+  flyway:
+    clean-disabled: false
+    validate-on-migrate: false
   application:
     name: marketplace-mvp
   
