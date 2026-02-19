@@ -1,5 +1,6 @@
 package com.cryptodrop.service.dto
 
+import com.cryptodrop.persistence.product.ProductStatus
 import jakarta.validation.constraints.*
 import java.math.BigDecimal
 
@@ -27,7 +28,8 @@ data class ProductUpdateDto(
     val images: List<String>? = null,
     val attributes: Map<String, String>? = null,
     val stock: Int? = null,
-    val active: Boolean? = null
+    val active: Boolean? = null,
+    val status: ProductStatus? = null
 )
 
 data class ProductResponseDto(
@@ -44,6 +46,8 @@ data class ProductResponseDto(
     val attributes: Map<String, String>,
     val stock: Int,
     val active: Boolean,
+    val status: String,
+    val isFeatured: Boolean = false,
     val createdAt: String,
     val updatedAt: String
 )

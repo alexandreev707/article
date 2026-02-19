@@ -17,9 +17,16 @@
                         <h2 class="text-xl font-semibold text-gray-900">Users</h2>
                     </div>
                     <p class="text-gray-600 mb-4">User management and access control</p>
-                    <span class="text-primary font-semibold inline-flex items-center">
-                        Open → 
-                    </span>
+                    <span class="text-primary font-semibold inline-flex items-center">Open →</span>
+                </a>
+
+                <a th:href="@{/admin/featured}" class="card hover:shadow-lg transition-all slide-up">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-amber-500 text-white flex items-center justify-center text-2xl mr-4">⭐</div>
+                        <h2 class="text-xl font-semibold text-gray-900">Feature products</h2>
+                    </div>
+                    <p class="text-gray-600 mb-4">Pin products to the homepage carousel</p>
+                    <span class="text-primary font-semibold inline-flex items-center">Open →</span>
                 </a>
                 
                 <a th:href="@{/products}" class="card hover:shadow-lg transition-all slide-up">

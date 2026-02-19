@@ -2,7 +2,9 @@ package com.cryptodrop.web.controller
 
 import com.cryptodrop.persistence.user.UserRole
 import com.cryptodrop.service.AdminService
+import com.cryptodrop.service.ProductService
 import com.cryptodrop.service.UserService
+import com.cryptodrop.service.dto.ProductResponseDto
 import com.cryptodrop.service.dto.UserResponseDto
 import com.cryptodrop.service.dto.UserUpdateDto
 import org.springframework.data.domain.PageRequest
@@ -18,7 +20,8 @@ import java.util.UUID
 @PreAuthorize("hasRole('ADMIN')")
 class AdminController(
     private val adminService: AdminService,
-    private val userService: UserService
+    private val userService: UserService,
+    private val productService: ProductService
 ) {
 
     @GetMapping
@@ -26,6 +29,29 @@ class AdminController(
         model.addAttribute("title", "Admin panel - Marketplace")
         model.addAttribute("currentUser", userService.getCurrentUser())
         return "admin/index"
+    }
+
+    @GetMapping("/featured")
+    fun featuredProducts(model: Model): String {
+        val sellers = adminService.getUsersByRole(UserRole.SELLER, PageRequest.of(0, 100))
+        model.addAttribute("title", "Feature products - Marketplace")
+        model.addAttribute("sellers", sellers.map { userService.toDto(it) })
+        model.addAttribute("currentUser", userService.getCurrentUser())
+        return "admin/featured"
+    }
+
+    @GetMapping("/sellers/{sellerId}/products")
+    fun sellerProductsForAdmin(
+        @PathVariable sellerId: String,
+        model: Model
+    ): String {
+        val products = productService.findBySeller(UUID.fromString(sellerId), PageRequest.of(0, 100))
+        val seller = userService.toDto(userService.findById(UUID.fromString(sellerId)))
+        model.addAttribute("title", "Products of " + seller.username + " - Marketplace")
+        model.addAttribute("products", products.map { productService.toDto(it) })
+        model.addAttribute("seller", seller)
+        model.addAttribute("currentUser", userService.getCurrentUser())
+        return "admin/seller-products"
     }
 
     @GetMapping("/users")
@@ -107,6 +133,18 @@ class AdminApiController(
         return ResponseEntity.ok(userService.toDto(user))
     }
 
+    @PostMapping("/users/{id}/verify")
+    fun verifyUser(@PathVariable id: String): ResponseEntity<UserResponseDto> {
+        val user = adminService.updateUser(UUID.fromString(id), UserUpdateDto(emailVerified = true))
+        return ResponseEntity.ok(userService.toDto(user))
+    }
+
+    @PostMapping("/users/{id}/unverify")
+    fun unverifyUser(@PathVariable id: String): ResponseEntity<UserResponseDto> {
+        val user = adminService.updateUser(UUID.fromString(id), UserUpdateDto(emailVerified = false))
+        return ResponseEntity.ok(userService.toDto(user))
+    }
+
     @PostMapping("/users/{id}/roles/{role}")
     fun grantRole(@PathVariable id: String, @PathVariable role: String): ResponseEntity<UserResponseDto> {
         val user = adminService.grantRole(UUID.fromString(id), role)
@@ -117,5 +155,26 @@ class AdminApiController(
     fun revokeRole(@PathVariable id: String, @PathVariable role: String): ResponseEntity<UserResponseDto> {
         val user = adminService.revokeRole(UUID.fromString(id), role)
         return ResponseEntity.ok(userService.toDto(user))
+    }
+}
+
+@RestController
+@RequestMapping("/api/admin")
+@PreAuthorize("hasRole('ADMIN')")
+class AdminProductApiController(
+    private val productService: ProductService,
+    private val userService: UserService
+) {
+
+    @PostMapping("/products/{id}/featured")
+    fun setFeatured(@PathVariable id: String): ResponseEntity<ProductResponseDto> {
+        val product = productService.setFeatured(UUID.fromString(id), true)
+        return ResponseEntity.ok(productService.toDto(product))
+    }
+
+    @DeleteMapping("/products/{id}/featured")
+    fun unsetFeatured(@PathVariable id: String): ResponseEntity<ProductResponseDto> {
+        val product = productService.setFeatured(UUID.fromString(id), false)
+        return ResponseEntity.ok(productService.toDto(product))
     }
 }

@@ -8,6 +8,11 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.UUID
 
+enum class ProductStatus {
+    DRAFT,
+    PUBLISHED
+}
+
 @Entity
 @Table(name = "products", indexes = [
     Index(name = "idx_seller_id", columnList = "seller_id"),
@@ -80,6 +85,10 @@ data class Product(
     val weightGrams: Int? = null,
 
     val active: Boolean = true,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    val status: ProductStatus = ProductStatus.DRAFT,
 
     @Column(name = "is_new")
     val isNew: Boolean = false,

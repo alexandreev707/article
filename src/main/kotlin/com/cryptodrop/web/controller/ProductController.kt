@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
 
 @Controller
@@ -51,7 +52,16 @@ class ProductController(
 
     @GetMapping("/{id}")
     fun viewProduct(@PathVariable id: String, model: Model): String {
-        val product = productService.findById(UUID.fromString(id))
+        val productId = try {
+            UUID.fromString(id)
+        } catch (e: IllegalArgumentException) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found")
+        }
+        val product = try {
+            productService.findById(productId)
+        } catch (e: IllegalArgumentException) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found")
+        }
         val productDto = productService.toDto(product)
         model.addAttribute("title", "${productDto.title} - Marketplace")
         model.addAttribute("product", productDto)
@@ -108,6 +118,30 @@ class ProductApiController(
     fun updateProduct(@PathVariable id: String, @Valid @RequestBody dto: ProductUpdateDto): ResponseEntity<ProductResponseDto> {
         val sellerId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
         val product = productService.updateProduct(UUID.fromString(id), sellerId, dto)
+        return ResponseEntity.ok(productService.toDto(product))
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    fun deleteProduct(@PathVariable id: String): ResponseEntity<Unit> {
+        val sellerId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
+        productService.deleteProduct(UUID.fromString(id), sellerId)
+        return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/{id}/publish")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    fun publishProduct(@PathVariable id: String): ResponseEntity<ProductResponseDto> {
+        val sellerId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
+        val product = productService.publishProduct(UUID.fromString(id), sellerId)
+        return ResponseEntity.ok(productService.toDto(product))
+    }
+
+    @PostMapping("/{id}/unpublish")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    fun unpublishProduct(@PathVariable id: String): ResponseEntity<ProductResponseDto> {
+        val sellerId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
+        val product = productService.unpublishProduct(UUID.fromString(id), sellerId)
         return ResponseEntity.ok(productService.toDto(product))
     }
 

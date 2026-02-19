@@ -1,6 +1,7 @@
 package com.cryptodrop.service.dto
 
 import com.cryptodrop.persistence.order.OrderStatus
+import com.cryptodrop.persistence.order.PaymentStatus
 import jakarta.validation.Valid
 import jakarta.validation.constraints.*
 import java.math.BigDecimal
@@ -38,6 +39,7 @@ data class OrderResponseDto(
     val totalPrice: BigDecimal,
     val discountAmount: BigDecimal? = null,
     val status: OrderStatus,
+    val paymentStatus: PaymentStatus? = null,
     val shippingAddress: AddressDto,
     val createdAt: String,
     val updatedAt: String

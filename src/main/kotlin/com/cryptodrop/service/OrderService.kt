@@ -5,6 +5,8 @@ import com.cryptodrop.persistence.order.Order
 import com.cryptodrop.persistence.order.OrderItem
 import com.cryptodrop.persistence.order.OrderRepository
 import com.cryptodrop.persistence.order.OrderStatus
+import com.cryptodrop.persistence.order.PaymentStatus
+import com.cryptodrop.persistence.product.ProductStatus
 import com.cryptodrop.persistence.product.ProductRepository
 import com.cryptodrop.service.dto.AddressDto
 import com.cryptodrop.service.dto.CheckoutDto
@@ -47,7 +49,7 @@ class OrderService(
     fun createOrder(buyerId: UUID, dto: OrderCreateDto): Order {
         val product = productRepository.findById(UUID.fromString(dto.productId))
             .orElseThrow { IllegalArgumentException("Product not found: ${dto.productId}") }
-        if (!product.active) throw IllegalStateException("Product is not available")
+        if (!product.active || product.status != ProductStatus.PUBLISHED) throw IllegalStateException("Product is not available")
         if (product.stock < dto.quantity) throw IllegalStateException("Insufficient stock")
 
         val buyer = userService.findById(buyerId)
@@ -121,7 +123,7 @@ class OrderService(
 
         for (item in cartItems) {
             val product = item.product
-            if (!product.active) throw IllegalStateException("Product ${product.title} is not available")
+            if (!product.active || product.status != ProductStatus.PUBLISHED) throw IllegalStateException("Product ${product.title} is not available")
             if (product.stock < item.quantity) throw IllegalStateException("Insufficient stock for ${product.title}")
 
             val itemSubtotal = (product.discountPrice ?: product.price).multiply(BigDecimal(item.quantity))
@@ -178,6 +180,24 @@ class OrderService(
             .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
     }
 
+    @Transactional
+    fun confirmPayment(orderIds: List<UUID>, buyerId: UUID): List<Order> {
+        val updated = mutableListOf<Order>()
+        for (orderId in orderIds) {
+            val order = orderRepository.findById(orderId)
+                .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
+            if (order.buyer.id != buyerId) {
+                throw IllegalStateException("Only order buyer can confirm payment")
+            }
+            order.paymentStatus = PaymentStatus.PAID
+            order.status = OrderStatus.CONFIRMED
+            order.updatedAt = LocalDateTime.now()
+            updated.add(orderRepository.save(order))
+        }
+        logger.info("Payment confirmed for orders: $orderIds")
+        return updated
+    }
+
     fun toDto(order: Order, productTitle: String? = null): OrderResponseDto {
         val item = order.items.firstOrNull()
             ?: throw IllegalStateException("Order has no items")
@@ -192,6 +212,7 @@ class OrderService(
             totalPrice = item.totalPrice,
             discountAmount = order.discountAmount.takeIf { it > BigDecimal.ZERO },
             status = order.status,
+            paymentStatus = order.paymentStatus,
             shippingAddress = AddressDto(
                 street = order.shippingAddress.addressLine,
                 city = order.shippingAddress.city,

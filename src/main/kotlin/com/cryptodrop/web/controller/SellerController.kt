@@ -28,6 +28,7 @@ class SellerController(
         val products = productService.findBySeller(sellerId, PageRequest.of(page, size))
         model.addAttribute("title", "My products - Marketplace")
         model.addAttribute("products", products.map { productService.toDto(it) })
+        model.addAttribute("categories", productService.getPopularCategories(20))
         model.addAttribute("currentPage", page)
         model.addAttribute("totalPages", products.totalPages)
         model.addAttribute("currentUser", userService.getCurrentUser())
@@ -42,9 +43,11 @@ class SellerController(
     ): String {
         val sellerId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
         val orders = orderService.findBySeller(sellerId, PageRequest.of(page, size))
+        model.addAttribute("title", "My orders & sales - Marketplace")
         model.addAttribute("orders", orders.map { orderService.toDto(it) })
         model.addAttribute("currentPage", page)
         model.addAttribute("totalPages", orders.totalPages)
+        model.addAttribute("currentUser", userService.getCurrentUser())
         return "seller/orders"
     }
 
@@ -58,6 +61,7 @@ class SellerController(
         val products = productService.findBySeller(sellerId, PageRequest.of(page, size))
         model.addAttribute("title", "My products - Marketplace")
         model.addAttribute("products", products.map { productService.toDto(it) })
+        model.addAttribute("categories", productService.getPopularCategories(20))
         model.addAttribute("currentPage", page)
         model.addAttribute("totalPages", products.totalPages)
         model.addAttribute("currentUser", userService.getCurrentUser())

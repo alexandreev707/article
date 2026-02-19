@@ -53,8 +53,8 @@
                 container.querySelectorAll('.delivery-option').forEach(x => { x.classList.remove('border-primary', 'bg-blue-50'); x.classList.add('border-gray-200'); });
                 el.classList.add('border-primary', 'bg-blue-50');
                 el.classList.remove('border-gray-200');
-                selectedDeliveryId = parseInt(el.dataset.id, 10);
-                document.getElementById('selectedDeliveryId').value = selectedDeliveryId;
+                selectedDeliveryId = el.dataset.id;
+                document.getElementById('selectedDeliveryId').value = selectedDeliveryId || '';
                 updateSummary();
             });
         });
@@ -107,6 +107,8 @@
         }
     }
 
+    let pendingOrderIds = [];
+
     async function submitCheckout() {
         if (!selectedDeliveryId) {
             showToast('Please select a delivery option', 'error');
@@ -114,20 +116,47 @@
         }
         const btn = document.getElementById('payBtn');
         btn.disabled = true;
-        btn.textContent = 'Processing...';
+        btn.textContent = 'Creating order...';
         try {
-            await api('POST', '/api/checkout', {
+            const opt = { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({
                 deliveryOptionId: selectedDeliveryId,
                 shippingAddress: null,
                 discountAmount: discountAmount > 0 ? discountAmount : null,
                 paymentMethodId: document.querySelector('.payment-option.selected')?.dataset?.method || 'card'
-            });
-            showToast('Order placed successfully!', 'success');
-            setTimeout(() => { window.location.href = '/orders'; }, 1500);
+            }) };
+            const response = await fetch('/api/checkout', opt);
+            if (!response.ok) throw new Error(await response.text());
+            const res = await response.json();
+            pendingOrderIds = res.orderIds || (res.orders || []).map(function(o) { return o.id; }) || [];
+            btn.disabled = false;
+            btn.textContent = 'Proceed to payment';
+            document.getElementById('testBankModal').classList.remove('hidden');
+            document.getElementById('testBankModal').classList.add('flex');
         } catch (e) {
             btn.disabled = false;
-            btn.textContent = 'Top up and pay';
+            btn.textContent = 'Proceed to payment';
             showToast(e.message || 'Checkout failed', 'error');
+        }
+    }
+
+    async function confirmPayment() {
+        if (pendingOrderIds.length === 0) {
+            showToast('No orders to pay', 'error');
+            return;
+        }
+        const payBtn = document.getElementById('testBankPay');
+        payBtn.disabled = true;
+        payBtn.textContent = 'Processing...';
+        try {
+            await api('POST', '/api/checkout/confirm-payment', { orderIds: pendingOrderIds });
+            showToast('Payment successful!', 'success');
+            document.getElementById('testBankModal').classList.add('hidden');
+            document.getElementById('testBankModal').classList.remove('flex');
+            setTimeout(() => { window.location.href = '/orders'; }, 1500);
+        } catch (e) {
+            payBtn.disabled = false;
+            payBtn.textContent = 'Pay';
+            showToast(e.message || 'Payment failed', 'error');
         }
     }
 
@@ -136,5 +165,10 @@
         initDiscountInput();
         loadCart().then(() => loadDeliveryOptions());
         document.getElementById('payBtn').addEventListener('click', submitCheckout);
+        document.getElementById('testBankCancel').addEventListener('click', () => {
+            document.getElementById('testBankModal').classList.add('hidden');
+            document.getElementById('testBankModal').classList.remove('flex');
+        });
+        document.getElementById('testBankPay').addEventListener('click', confirmPayment);
     });
 })();

@@ -4,6 +4,7 @@ import com.cryptodrop.persistence.category.Category
 import com.cryptodrop.persistence.category.CategoryRepository
 import com.cryptodrop.persistence.product.Product
 import com.cryptodrop.persistence.product.ProductRepository
+import com.cryptodrop.persistence.product.ProductStatus
 import com.cryptodrop.service.dto.ProductCreateDto
 import com.cryptodrop.service.dto.ProductFilterDto
 import com.cryptodrop.service.dto.ProductResponseDto
@@ -48,10 +49,22 @@ class ProductService(
             .trim()
     }
 
+    private val allowedImageExtensions = setOf("png", "jpg", "jpeg")
+    private fun validateImageUrls(images: List<String>) {
+        for (url in images) {
+            val pathPart = url.substringBefore('?')
+            val ext = pathPart.substringAfterLast('.', "").lowercase()
+            if (ext !in allowedImageExtensions) {
+                throw IllegalArgumentException("Image URLs must end with .png, .jpg or .jpeg, got: $url")
+            }
+        }
+    }
+
     @CacheEvict(value = ["products", "categories"], allEntries = true)
     @Transactional
     fun createProduct(sellerId: UUID, dto: ProductCreateDto): Product {
         logger.info("Creating product: ${dto.title} by seller: $sellerId")
+        validateImageUrls(dto.images)
         val seller = userService.findById(sellerId)
         val category = getOrCreateCategory(dto.category)
         val product = Product(
@@ -63,7 +76,8 @@ class ProductService(
             price = dto.price,
             images = dto.images.toMutableList(),
             attributes = dto.attributes.toMutableMap(),
-            stock = dto.stock
+            stock = dto.stock,
+            status = ProductStatus.DRAFT
         )
         return productRepository.save(product)
     }
@@ -78,16 +92,21 @@ class ProductService(
             throw IllegalStateException("Only product owner can update it")
         }
 
+        val newImages = dto.images ?: product.images
+        validateImageUrls(newImages)
+
         val category = dto.category?.let { getOrCreateCategory(it) } ?: product.category
+        val newStatus = dto.status ?: product.status
         val updatedProduct = product.copy(
             title = dto.title ?: product.title,
             description = dto.description ?: product.description,
             price = dto.price ?: product.price,
             category = category,
-            images = dto.images?.toMutableList() ?: product.images,
+            images = newImages.toMutableList(),
             attributes = dto.attributes?.toMutableMap() ?: product.attributes,
             stock = dto.stock ?: product.stock,
             active = dto.active ?: product.active,
+            status = newStatus,
             updatedAt = LocalDateTime.now()
         )
         return productRepository.save(updatedProduct)
@@ -182,6 +201,66 @@ class ProductService(
         return products.subList(start, end).map { toDto(it, it.seller.username) }
     }
 
+    @CacheEvict(value = ["products"], allEntries = true)
+    @Transactional
+    fun deleteProduct(productId: UUID, sellerId: UUID): Unit {
+        val product = productRepository.findById(productId)
+            .orElseThrow { IllegalArgumentException("Product not found: $productId") }
+        if (product.seller.id != sellerId) {
+            throw IllegalStateException("Only product owner can delete it")
+        }
+        productRepository.delete(product)
+        logger.info("Deleted product: $productId")
+    }
+
+    @CacheEvict(value = ["products"], allEntries = true)
+    @Transactional
+    fun publishProduct(productId: UUID, sellerId: UUID): Product {
+        val product = productRepository.findById(productId)
+            .orElseThrow { IllegalArgumentException("Product not found: $productId") }
+        if (product.seller.id != sellerId) {
+            throw IllegalStateException("Only product owner can publish it")
+        }
+        val updated = product.copy(
+            status = ProductStatus.PUBLISHED,
+            active = true,
+            updatedAt = LocalDateTime.now()
+        )
+        return productRepository.save(updated)
+    }
+
+    fun findFeatured(limit: Int): List<Product> {
+        return productRepository.findByIsFeaturedTrueOrderByUpdatedAtDesc(PageRequest.of(0, limit)).content
+    }
+
+    @CacheEvict(value = ["products"], allEntries = true)
+    @Transactional
+    fun setFeatured(productId: UUID, featured: Boolean): Product {
+        val product = productRepository.findById(productId)
+            .orElseThrow { IllegalArgumentException("Product not found: $productId") }
+        val updated = product.copy(
+            isFeatured = featured,
+            updatedAt = LocalDateTime.now()
+        )
+        return productRepository.save(updated)
+    }
+
+    @CacheEvict(value = ["products"], allEntries = true)
+    @Transactional
+    fun unpublishProduct(productId: UUID, sellerId: UUID): Product {
+        val product = productRepository.findById(productId)
+            .orElseThrow { IllegalArgumentException("Product not found: $productId") }
+        if (product.seller.id != sellerId) {
+            throw IllegalStateException("Only product owner can unpublish it")
+        }
+        val updated = product.copy(
+            status = ProductStatus.DRAFT,
+            active = false,
+            updatedAt = LocalDateTime.now()
+        )
+        return productRepository.save(updated)
+    }
+
     fun toDto(product: Product, sellerName: String? = null): ProductResponseDto {
         val seller = sellerName ?: product.seller.username
         return ProductResponseDto(
@@ -198,6 +277,8 @@ class ProductService(
             attributes = product.attributes,
             stock = product.stock,
             active = product.active,
+            status = product.status.name,
+            isFeatured = product.isFeatured,
             createdAt = product.createdAt.format(dateFormatter),
             updatedAt = product.updatedAt.format(dateFormatter)
         )

@@ -29,7 +29,7 @@ async function addToCart() {
     btn.disabled = true;
     btn.textContent = 'Adding...';
     try {
-        await apiCall('/api/cart/items', 'POST', { productId: parseInt(window.productData.id), quantity: 1 });
+        await apiCall('/api/cart/items', 'POST', { productId: String(window.productData.id), quantity: 1 });
         showToast('Added to cart', 'success');
         btn.textContent = 'Add to cart';
     } catch (e) {
@@ -66,7 +66,7 @@ async function buyNow() {
 
     try {
         const orderData = {
-            productId: parseInt(window.productData.id),
+            productId: String(window.productData.id),
             quantity: 1,
             shippingAddress: {
                 street: "123 Test St",
@@ -99,7 +99,7 @@ async function toggleFavorite() {
 
     try {
         const url = `/api/favorites/toggle/${window.productData.id}`;
-        await apiCall(url, isFavorited ? 'DELETE' : 'POST');
+        await apiCall(url, 'POST');
 
         btn.dataset.favorited = (!isFavorited).toString();
         btn.classList.toggle('favorited', !isFavorited);

@@ -56,7 +56,7 @@ data class Order(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status")
-    val paymentStatus: PaymentStatus = PaymentStatus.PENDING,
+    var paymentStatus: PaymentStatus = PaymentStatus.PENDING,
 
     @Embedded
     val shippingAddress: Address,

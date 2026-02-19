@@ -55,6 +55,7 @@ class AdminService(
         val updatedUser = user.copy(
             roles = updatedRoles,
             blocked = dto.blocked ?: user.blocked,
+            emailVerified = dto.emailVerified ?: user.emailVerified,
             updatedAt = LocalDateTime.now()
         )
 

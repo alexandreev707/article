@@ -6,30 +6,39 @@
 <body>
     <div th:fragment="content">
         <div class="container py-8">
-            <h1 class="text-3xl font-bold mb-8 text-gray-900">User Management</h1>
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">User Management</h1>
+                <a th:href="@{/admin}" class="btn-secondary">← Dashboard</a>
+            </div>
 
-            <div class="table-container" th:if="${users != null and !users.isEmpty()}">
-                <table>
+            <div class="mb-4 flex gap-2 flex-wrap">
+                <a th:href="@{/admin/users}" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50">All</a>
+                <a th:href="@{/admin/users(role='SELLER')}" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50">Sellers</a>
+                <a th:href="@{/admin/users(blocked=true)}" class="px-4 py-2 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100">Blocked</a>
+            </div>
+
+            <div class="table-container overflow-x-auto" th:if="${users != null and !users.isEmpty()}">
+                <table class="w-full">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Email</th>
-                            <th>Name</th>
+                            <th>User</th>
                             <th>Roles</th>
                             <th>Status</th>
+                            <th>Verified</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="user : ${users}">
-                            <td class="font-mono text-xs" th:text="${#strings.substring(user.id, 0, 8) + '...'}">ID</td>
-                            <td th:text="${user.email}">Email</td>
-                            <td class="font-medium" th:text="${user.username}">Username</td>
+                            <td>
+                                <div class="font-medium" th:text="${user.username}">Username</div>
+                                <div class="text-sm text-gray-500" th:text="${user.email}">email</div>
+                                <div class="font-mono text-xs text-gray-400" th:text="${#strings.substring(user.id, 0, 8) + '...'}">id</div>
+                            </td>
                             <td>
                                 <div class="flex flex-wrap gap-1">
                                     <span th:each="role : ${user.roles}" 
-                                          class="badge badge-info text-xs"
-                                          th:text="${role}">ROLE</span>
+                                          class="badge badge-info text-xs" th:text="${role}">ROLE</span>
                                 </div>
                             </td>
                             <td>
@@ -37,40 +46,47 @@
                                 <span th:unless="${user.blocked}" class="badge badge-success">Active</span>
                             </td>
                             <td>
+                                <span th:if="${user.emailVerified}" class="badge bg-green-100 text-green-800">Verified</span>
+                                <span th:unless="${user.emailVerified}" class="badge bg-amber-100 text-amber-800">Unverified</span>
+                            </td>
+                            <td>
                                 <div class="flex flex-wrap gap-2">
-                                    <button th:if="${!user.blocked}" 
-                                            th:onclick="'blockUser(\'' + ${user.id} + '\')'"
-                                            class="text-xs px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded transition-colors">
-                                        Block
-                                    </button>
-                                    <button th:if="${user.blocked}" 
-                                            th:onclick="'unblockUser(\'' + ${user.id} + '\')'"
-                                            class="text-xs px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded transition-colors">
-                                        Unblock
-                                    </button>
-                                    <button th:onclick="'grantRole(\'' + ${user.id} + '\', \'ROLE_SELLER\')'"
-                                            class="text-xs px-3 py-1 bg-primary hover:bg-primary-dark text-white rounded transition-colors">
-                                        Make seller
-                                    </button>
+                                    <button type="button" th:if="${!user.blocked}" 
+                                            class="admin-block-btn text-xs px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded"
+                                            th:attr="data-user-id=${user.id}">Block</button>
+                                    <button type="button" th:if="${user.blocked}" 
+                                            class="admin-unblock-btn text-xs px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded"
+                                            th:attr="data-user-id=${user.id}">Unblock</button>
+                                    <button type="button" th:if="${!user.emailVerified}" 
+                                            class="admin-verify-btn text-xs px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded"
+                                            th:attr="data-user-id=${user.id}">Verify</button>
+                                    <button type="button" th:if="${user.emailVerified}" 
+                                            class="admin-unverify-btn text-xs px-3 py-1.5 bg-gray-400 hover:bg-gray-500 text-white rounded"
+                                            th:attr="data-user-id=${user.id}">Unverify</button>
+                                    <button type="button" th:unless="${user.roles.contains('ROLE_SELLER')}" 
+                                            class="admin-grant-seller-btn text-xs px-3 py-1.5 bg-primary hover:bg-primary-dark text-white rounded"
+                                            th:attr="data-user-id=${user.id}">Make seller</button>
+                                    <button type="button" th:if="${user.roles.contains('ROLE_SELLER') and !user.roles.contains('ROLE_ADMIN')}" 
+                                            class="admin-revoke-seller-btn text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50"
+                                            th:attr="data-user-id=${user.id}">Revoke seller</button>
                                 </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            
+
             <div th:if="${users == null or users.isEmpty()}" class="text-center py-12 text-gray-500">
                 <p>No users found</p>
             </div>
 
-            <!-- Pagination -->
             <div class="mt-8 flex justify-center items-center gap-4" th:if="${totalPages != null and totalPages > 1}">
                 <a th:if="${currentPage > 0}" 
-                   th:href="@{/admin/users(page=${currentPage - 1})}"
+                   th:href="@{/admin/users(page=${currentPage - 1}, role=${param.role}, blocked=${param.blocked})}"
                    class="btn-secondary px-6 py-2">← Previous</a>
                 <span class="text-gray-600 font-medium" th:text="'Page ' + (${currentPage} + 1) + ' of ' + ${totalPages}">Page 1 of 1</span>
                 <a th:if="${currentPage < totalPages - 1}" 
-                   th:href="@{/admin/users(page=${currentPage + 1})}"
+                   th:href="@{/admin/users(page=${currentPage + 1}, role=${param.role}, blocked=${param.blocked})}"
                    class="btn-secondary px-6 py-2">Next →</a>
             </div>
         </div>

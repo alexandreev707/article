@@ -88,7 +88,8 @@ class UserService(
             email = user.email,
             username = user.username,
             roles = user.roles.map { "ROLE_${it.name}" }.toSet(),
-            blocked = user.blocked
+            blocked = user.blocked,
+            emailVerified = user.emailVerified
         )
     }
 }

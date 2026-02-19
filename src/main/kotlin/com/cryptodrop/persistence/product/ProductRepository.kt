@@ -13,11 +13,13 @@ import java.util.UUID
 interface ProductRepository : JpaRepository<Product, UUID> {
     fun findBySellerId(sellerId: UUID, pageable: Pageable): Page<Product>
     fun findByCategoryId(categoryId: UUID, pageable: Pageable): Page<Product>
-    fun findByCategoryName(categoryName: String, pageable: Pageable): Page<Product>
+
+    @Query("SELECT p FROM Product p WHERE p.active = true AND p.status = 'PUBLISHED' AND p.category.name = :categoryName")
+    fun findByCategoryName(@Param("categoryName") categoryName: String, pageable: Pageable): Page<Product>
     fun findByActive(active: Boolean, pageable: Pageable): Page<Product>
     fun findByIdIn(productIds: List<UUID>): List<Product>
 
-    @Query("SELECT p FROM Product p WHERE p.active = true AND p.category.name = :category AND p.price BETWEEN :minPrice AND :maxPrice")
+    @Query("SELECT p FROM Product p WHERE p.active = true AND p.status = 'PUBLISHED' AND p.category.name = :category AND p.price BETWEEN :minPrice AND :maxPrice")
     fun findByCategoryAndPriceBetween(
         @Param("category") category: String,
         @Param("minPrice") minPrice: BigDecimal,
@@ -25,12 +27,14 @@ interface ProductRepository : JpaRepository<Product, UUID> {
         pageable: Pageable
     ): Page<Product>
 
-    @Query("SELECT p FROM Product p WHERE p.active = true AND p.category.name = :category")
+    @Query("SELECT p FROM Product p WHERE p.active = true AND p.status = 'PUBLISHED' AND p.category.name = :category")
     fun findByCategoryNameOnly(@Param("category") category: String, pageable: Pageable): Page<Product>
 
-    @Query("SELECT p FROM Product p WHERE p.active = true AND p.rating >= :minRating")
+    @Query("SELECT p FROM Product p WHERE p.active = true AND p.status = 'PUBLISHED' AND p.rating >= :minRating")
     fun findByRatingGreaterThanEqual(@Param("minRating") minRating: BigDecimal, pageable: Pageable): Page<Product>
 
-    @Query("SELECT p FROM Product p WHERE p.active = true")
+    @Query("SELECT p FROM Product p WHERE p.active = true AND p.status = 'PUBLISHED'")
     fun findAllActive(pageable: Pageable): Page<Product>
+
+    fun findByIsFeaturedTrueOrderByUpdatedAtDesc(pageable: Pageable): Page<Product>
 }

@@ -6,28 +6,194 @@
 <body>
 <div th:fragment="content">
     <div class="container py-8">
-        <!-- Hero Banner -->
-        <div class="hero-section fade-in mb-12">
-            <div class="max-w-3xl">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">Welcome to Marketplace</h1>
-                <p class="text-lg md:text-xl text-blue-100 mb-6">Thousands of products from verified sellers</p>
-                <a th:href="@{/products}" class="inline-block bg-white text-primary px-8 py-3 rounded-lg font-semibold text-base hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl">
-                    Go to Catalog →
-                </a>
+        <!-- Promo carousel (ad cards) -->
+        <div class="mb-10 promo-carousel-section">
+            <div class="promo-carousel-wrapper relative">
+                <button type="button" class="promo-carousel-btn promo-carousel-prev" aria-label="Previous">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button type="button" class="promo-carousel-btn promo-carousel-next" aria-label="Next">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <div class="promo-carousel-track" id="promoCarousel">
+                    <a href="#" class="promo-carousel-slide flex-shrink-0" th:href="@{/products}">
+                        <img th:src="@{/images/carousel/banner1.png}" alt="Super Sale" class="promo-carousel-img">
+                    </a>
+                    <a href="#" class="promo-carousel-slide flex-shrink-0" th:href="@{/products}">
+                        <img th:src="@{/images/carousel/banner2.png}" alt="Hoodie" class="promo-carousel-img">
+                    </a>
+                    <a href="#" class="promo-carousel-slide flex-shrink-0" th:href="@{/products}">
+                        <img th:src="@{/images/carousel/banner3.png}" alt="Nike Socks" class="promo-carousel-img">
+                    </a>
+                    <a href="#" class="promo-carousel-slide flex-shrink-0" th:href="@{/products}">
+                        <img th:src="@{/images/carousel/banner4.png}" alt="Adidas Fragrance" class="promo-carousel-img">
+                    </a>
+                    <a href="#" class="promo-carousel-slide flex-shrink-0" th:href="@{/products}">
+                        <img th:src="@{/images/carousel/banner5.png}" alt="Sale" class="promo-carousel-img">
+                    </a>
+                    <a href="#" class="promo-carousel-slide flex-shrink-0" th:href="@{/products}">
+                        <img th:src="@{/images/carousel/banner6.png}" alt="Black Friday" class="promo-carousel-img">
+                    </a>
+                    <a href="#" class="promo-carousel-slide flex-shrink-0" th:href="@{/products}">
+                        <img th:src="@{/images/carousel/banner7.png}" alt="Smartphone" class="promo-carousel-img">
+                    </a>
+                </div>
+                <div class="promo-carousel-dots flex justify-center gap-2 mt-4" id="promoCarouselDots"></div>
             </div>
         </div>
+        <script>
+            (function() {
+                var track = document.getElementById('promoCarousel');
+                var dotsEl = document.getElementById('promoCarouselDots');
+                if (!track || !dotsEl) return;
+                var slides = track.querySelectorAll('.promo-carousel-slide');
+                var n = slides.length;
+                if (n === 0) return;
+                function getCardsPerPage() {
+                    if (window.matchMedia('(max-width: 639px)').matches) return 2;
+                    if (window.matchMedia('(max-width: 767px)').matches) return 3;
+                    return 4;
+                }
+                var cardsPerPage = getCardsPerPage();
+                var totalPages = Math.max(1, Math.ceil(n / cardsPerPage));
+                dotsEl.innerHTML = '';
+                for (var p = 0; p < totalPages; p++) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'promo-carousel-dot' + (p === 0 ? ' active' : '');
+                    btn.setAttribute('aria-label', 'Page ' + (p + 1));
+                    btn.dataset.page = p;
+                    (function(page) {
+                        btn.addEventListener('click', function() {
+                            var cardWidth = slides[0].offsetWidth;
+                            var gap = 16;
+                            var cpp = getCardsPerPage();
+                            var pageWidth = cardWidth * cpp + gap * (cpp - 1);
+                            track.scrollTo({ left: page * pageWidth, behavior: 'smooth' });
+                        });
+                    })(p);
+                    dotsEl.appendChild(btn);
+                }
+                var prevBtn = document.querySelector('.promo-carousel-prev');
+                var nextBtn = document.querySelector('.promo-carousel-next');
+                function go(delta) {
+                    var cardWidth = slides[0].offsetWidth;
+                    var gap = 16;
+                    var cpp = getCardsPerPage();
+                    var pageWidth = cardWidth * cpp + gap * (cpp - 1);
+                    var totalPages = Math.max(1, Math.ceil(n / cpp));
+                    var current = Math.round(track.scrollLeft / pageWidth);
+                    var next = Math.max(0, Math.min(totalPages - 1, current + delta));
+                    track.scrollTo({ left: next * pageWidth, behavior: 'smooth' });
+                }
+                if (prevBtn) prevBtn.addEventListener('click', function() { go(-1); });
+                if (nextBtn) nextBtn.addEventListener('click', function() { go(1); });
+                function updateDots() {
+                    var cardWidth = slides[0].offsetWidth;
+                    var gap = 16;
+                    var cpp = getCardsPerPage();
+                    var pageWidth = cardWidth * cpp + gap * (cpp - 1);
+                    var totalPages = Math.max(1, Math.ceil(n / cpp));
+                    var page = Math.min(totalPages - 1, Math.round(track.scrollLeft / pageWidth));
+                    dotsEl.querySelectorAll('.promo-carousel-dot').forEach(function(dot, i) {
+                        dot.classList.toggle('active', i === page);
+                    });
+                }
+                track.addEventListener('scroll', updateDots);
+            })();
+        </script>
 
-        <!-- Popular Categories -->
-        <div class="mb-12" th:if="${popularCategories != null and !popularCategories.isEmpty()}">
-            <h2 class="text-2xl font-bold mb-6 text-gray-900">Popular Categories</h2>
-            <div class="flex flex-wrap gap-3">
-                <a th:each="category : ${popularCategories}"
-                   th:href="@{/products(category=${category})}"
-                   class="category-chip">
-                    <span th:text="${category}">Category</span>
-                </a>
+        <!-- Suggested products carousel (with arrows and dots) -->
+        <div class="mb-12 suggested-carousel-section" th:if="${featuredProducts != null and !featuredProducts.isEmpty()}">
+            <h2 class="carousel-title text-2xl font-bold mb-6 text-center text-gray-800">Suggested products</h2>
+            <div class="carousel-wrapper relative">
+                <button type="button" class="carousel-btn carousel-btn-prev" aria-label="Previous">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button type="button" class="carousel-btn carousel-btn-next" aria-label="Next">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <div class="carousel-track flex gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-hide" id="suggestedCarousel">
+                    <div th:each="product : ${featuredProducts}" class="carousel-card flex-shrink-0">
+                        <a th:href="@{/products/{id}(id=${product.id})}" class="block bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all h-full">
+                            <div class="relative h-44 bg-gray-50">
+                                <img th:if="${product.images != null and !product.images.isEmpty()}" th:src="${product.images[0]}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                                <div th:unless="${product.images != null and !product.images.isEmpty()}" class="w-full h-full flex items-center justify-center text-gray-400 text-sm">No photo</div>
+                                <button th:if="${currentUser != null}" type="button" class="product-card-favorite-btn"
+                                    th:classappend="${#lists.contains(favoriteProductIds, product.id)} ? 'favorited' : ''"
+                                    th:attr="data-product-id=${product.id}, data-favorited=${#lists.contains(favoriteProductIds, product.id)}"
+                                    onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteCard(this.dataset.productId, this)"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" width="20" height="20"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-medium text-gray-900 text-sm line-clamp-2 min-h-[2.5rem]" th:text="${product.title}">Title</h3>
+                                <div class="flex items-center gap-1 mt-2 text-amber-500">
+                                    <span th:each="i : ${#numbers.sequence(1, 5)}" th:classappend="${i <= product.rating} ? 'opacity-100' : 'opacity-30'">★</span>
+                                    <span class="text-gray-500 text-xs ml-1" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="text-primary font-bold" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</span>
+                                </div>
+                                <button th:if="${currentUser != null && product.stock > 0}" type="button" class="product-card-add-cart w-full mt-3"
+                                    th:attr="data-product-id=${product.id}"
+                                    onclick="event.preventDefault(); event.stopPropagation(); addToCartCard(this.dataset.productId, this)">
+                                    <span>Add to cart</span>
+                                </button>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="carousel-dots flex justify-center gap-2 mt-4" id="suggestedCarouselDots"></div>
             </div>
         </div>
+        <script th:if="${featuredProducts != null and !featuredProducts.isEmpty()}">
+            (function() {
+                var track = document.getElementById('suggestedCarousel');
+                var dotsEl = document.getElementById('suggestedCarouselDots');
+                if (!track || !dotsEl) return;
+                var cards = track.querySelectorAll('.carousel-card');
+                var cardCount = cards.length;
+                var cardsPerPage = 4;
+                if (window.matchMedia('(max-width: 639px)').matches) cardsPerPage = 2;
+                else if (window.matchMedia('(max-width: 767px)').matches) cardsPerPage = 3;
+                var totalPages = Math.max(1, Math.ceil(cardCount / cardsPerPage));
+                for (var p = 0; p < totalPages; p++) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'carousel-dot' + (p === 0 ? ' active' : '');
+                    btn.setAttribute('aria-label', 'Page ' + (p + 1));
+                    btn.dataset.page = p;
+                    btn.addEventListener('click', function() {
+                        var page = parseInt(this.dataset.page, 10);
+                        var cardWidth = cards[0].offsetWidth;
+                        var gap = 24;
+                        track.scrollTo({ left: page * (cardWidth + gap) * cardsPerPage, behavior: 'smooth' });
+                    });
+                    dotsEl.appendChild(btn);
+                }
+                var prevBtn = track.closest('.carousel-wrapper').querySelector('.carousel-btn-prev');
+                var nextBtn = track.closest('.carousel-wrapper').querySelector('.carousel-btn-next');
+                function go(delta) {
+                    var cardWidth = cards[0].offsetWidth;
+                    var gap = 24;
+                    var pageWidth = (cardWidth + gap) * cardsPerPage;
+                    var current = Math.round(track.scrollLeft / pageWidth);
+                    var next = Math.max(0, Math.min(totalPages - 1, current + delta));
+                    track.scrollTo({ left: next * pageWidth, behavior: 'smooth' });
+                }
+                if (prevBtn) prevBtn.addEventListener('click', function() { go(-1); });
+                if (nextBtn) nextBtn.addEventListener('click', function() { go(1); });
+                function updateDots() {
+                    var cardWidth = cards[0].offsetWidth;
+                    var gap = 24;
+                    var pageWidth = (cardWidth + gap) * cardsPerPage;
+                    var page = Math.min(totalPages - 1, Math.round(track.scrollLeft / pageWidth));
+                    dotsEl.querySelectorAll('.carousel-dot').forEach(function(dot, i) {
+                        dot.classList.toggle('active', i === page);
+                    });
+                }
+                track.addEventListener('scroll', updateDots);
+            })();
+        </script>
 
         <!-- Recommended Products -->
         <div class="mb-12" th:if="${recommendedProducts != null and !recommendedProducts.isEmpty()}">
@@ -144,7 +310,7 @@
                    class="btn-secondary px-6 py-2">← Previous</a>
                 <span class="text-gray-600 font-medium" th:text="'Page ' + (${currentPage} + 1) + ' of ' + ${totalPages}">Page 1 of 1</span>
                 <a th:if="${currentPage < totalPages - 1}"
-                   th:href="@{/(page=${currentPage + 1}, size=${12})}"
+                   th:href="@{/(page=${currentPage + 1}, size=12)}"
                    class="btn-secondary px-6 py-2">Next →</a>
             </div>
         </div>

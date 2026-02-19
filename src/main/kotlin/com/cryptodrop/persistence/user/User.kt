@@ -43,6 +43,9 @@ data class User(
     @Column(name = "email_verified")
     val emailVerified: Boolean = false,
 
+    @Column(name = "bank_account")
+    val bankAccount: String? = null,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 

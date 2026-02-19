@@ -24,7 +24,23 @@ class CheckoutController(
         return ResponseEntity.status(HttpStatus.CREATED).body(
             mapOf(
                 "orders" to orders.map { orderService.toDto(it) },
-                "message" to "Order(s) created successfully"
+                "orderIds" to orders.map { it.id!!.toString() },
+                "message" to "Order(s) created. Proceed to payment."
+            )
+        )
+    }
+
+    @PostMapping("/confirm-payment")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    fun confirmPayment(@RequestBody body: Map<String, List<String>>): ResponseEntity<Map<String, Any>> {
+        val userId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
+        val orderIds = body["orderIds"] ?: throw IllegalArgumentException("orderIds required")
+        val uuids = orderIds.map { java.util.UUID.fromString(it) }
+        val orders = orderService.confirmPayment(uuids, userId)
+        return ResponseEntity.ok(
+            mapOf(
+                "orders" to orders.map { orderService.toDto(it) },
+                "message" to "Payment confirmed successfully"
             )
         )
     }

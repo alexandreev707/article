@@ -22,10 +22,12 @@ class HomeController(
     ): String {
         val currentUser = userService.getCurrentUser()
         val userId = currentUser?.id
+        val featuredProducts = productService.findFeatured(12)
         val recommendedProducts = productService.getRecommendedProducts(userId, 8)
         val popularCategories = productService.getPopularCategories(6)
         val allProducts = productService.findAllActive(PageRequest.of(page, size))
         model.addAttribute("title", "Main - Marketplace")
+        model.addAttribute("featuredProducts", featuredProducts.map { productService.toDto(it) })
         model.addAttribute("recommendedProducts", recommendedProducts.map { productService.toDto(it) })
         model.addAttribute("popularCategories", popularCategories)
         model.addAttribute("products", allProducts.map { productService.toDto(it) })
