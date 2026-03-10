@@ -125,7 +125,7 @@
                                 <h3 class="font-medium text-gray-900 text-sm line-clamp-2 min-h-[2.5rem]" th:text="${product.title}">Title</h3>
                                 <div class="flex items-center gap-1 mt-2 text-amber-500">
                                     <span th:each="i : ${#numbers.sequence(1, 5)}" th:classappend="${i <= product.rating} ? 'opacity-100' : 'opacity-30'">★</span>
-                                    <span class="text-gray-500 text-xs ml-1" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
+                            <span class="text-gray-500 text-xs ml-1" th:text="'(' + ${product.reviewCount} + ')'">(0)</span>
                                 </div>
                                 <div class="mt-2">
                                     <span class="text-primary font-bold" th:text="'$' + ${#numbers.formatDecimal(product.price, 1, 2)}">$0.00</span>

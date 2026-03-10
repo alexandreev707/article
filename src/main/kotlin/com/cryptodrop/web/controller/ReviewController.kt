@@ -36,7 +36,7 @@ class ReviewController(
     ): ResponseEntity<Map<String, Any>> {
         val reviews = reviewService.findByProduct(UUID.fromString(productId), PageRequest.of(page, size))
         return ResponseEntity.ok(mapOf(
-            "reviews" to reviews.map { reviewService.toDto(it) },
+            "reviews" to reviews.content.map { reviewService.toDto(it) },
             "totalPages" to reviews.totalPages,
             "currentPage" to page
         ))

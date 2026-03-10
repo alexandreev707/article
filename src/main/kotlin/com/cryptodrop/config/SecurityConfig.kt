@@ -31,7 +31,8 @@ class SecurityConfig {
                     .requestMatchers(
                         "/products/**", "/api/products/**",
                         "/api/categories", "/api/categories/*",
-                        "/api/delivery-options", "/api/delivery-options/*"
+                        "/api/delivery-options", "/api/delivery-options/*",
+                        "/api/reviews/product/**"
                     ).permitAll()
                     .requestMatchers("/", "/login", "/logout", "/error", "/h2-console/**").permitAll()
 
