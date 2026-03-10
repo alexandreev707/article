@@ -6,106 +6,103 @@
 <body>
 <div th:fragment="content">
     <div class="container py-8">
-        <!-- Promo carousel (ad cards) -->
-        <div class="mb-10 promo-carousel-section">
-            <div class="promo-carousel-wrapper relative">
-                <button type="button" class="promo-carousel-btn promo-carousel-prev" aria-label="Previous">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <button type="button" class="promo-carousel-btn promo-carousel-next" aria-label="Next">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </button>
-                <div class="promo-carousel-track" id="promoCarousel">
-                    <a href="/products" class="promo-carousel-slide flex-shrink-0">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='280'%3E%3Crect fill='%23FF6600' width='600' height='280'/%3E%3Ctext fill='white' x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='28' font-weight='bold'%3ESuper Sale%3C/text%3E%3C/svg%3E" alt="Super Sale" class="promo-carousel-img">
+        <!-- Banner carousel: test brand slides on pleasant backgrounds -->
+        <div class="promo-banner-section mb-10">
+            <div class="promo-banner-wrapper relative">
+                <div class="promo-banner-track" id="promoCarousel">
+                    <a href="/products" class="promo-banner-slide promo-banner-brand flex-shrink-0" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                        <span class="promo-banner-brand-name">Nike</span>
+                        <span class="promo-banner-brand-tagline">Just Do It</span>
                     </a>
-                    <a href="/products" class="promo-carousel-slide flex-shrink-0">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='280'%3E%3Crect fill='%23E65C00' width='600' height='280'/%3E%3Ctext fill='white' x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='28' font-weight='bold'%3EHoodie%3C/text%3E%3C/svg%3E" alt="Hoodie" class="promo-carousel-img">
+                    <a href="/products" class="promo-banner-slide promo-banner-brand flex-shrink-0" style="background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);">
+                        <span class="promo-banner-brand-name">Adidas</span>
+                        <span class="promo-banner-brand-tagline">Impossible is Nothing</span>
                     </a>
-                    <a href="/products" class="promo-carousel-slide flex-shrink-0">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='280'%3E%3Crect fill='%23FF8533' width='600' height='280'/%3E%3Ctext fill='white' x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='28' font-weight='bold'%3ENike Socks%3C/text%3E%3C/svg%3E" alt="Nike Socks" class="promo-carousel-img">
+                    <a href="/products" class="promo-banner-slide promo-banner-brand flex-shrink-0" style="background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);">
+                        <span class="promo-banner-brand-name">Puma</span>
+                        <span class="promo-banner-brand-tagline">Forever Faster</span>
                     </a>
-                    <a href="/products" class="promo-carousel-slide flex-shrink-0">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='280'%3E%3Crect fill='%23FF9944' width='600' height='280'/%3E%3Ctext fill='white' x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='24' font-weight='bold'%3EAdidas Fragrance%3C/text%3E%3C/svg%3E" alt="Adidas Fragrance" class="promo-carousel-img">
+                    <a href="/products" class="promo-banner-slide promo-banner-brand flex-shrink-0" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);">
+                        <span class="promo-banner-brand-name">New Balance</span>
+                        <span class="promo-banner-brand-tagline">Fearlessly Independent</span>
                     </a>
-                    <a href="/products" class="promo-carousel-slide flex-shrink-0">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='280'%3E%3Crect fill='%23dc2626' width='600' height='280'/%3E%3Ctext fill='white' x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='28' font-weight='bold'%3ESale%3C/text%3E%3C/svg%3E" alt="Sale" class="promo-carousel-img">
-                    </a>
-                    <a href="/products" class="promo-carousel-slide flex-shrink-0">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='280'%3E%3Crect fill='%231f2937' width='600' height='280'/%3E%3Ctext fill='white' x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='24' font-weight='bold'%3EBlack Friday%3C/text%3E%3C/svg%3E" alt="Black Friday" class="promo-carousel-img">
-                    </a>
-                    <a href="/products" class="promo-carousel-slide flex-shrink-0">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='280'%3E%3Crect fill='%234b5563' width='600' height='280'/%3E%3Ctext fill='white' x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='28' font-weight='bold'%3ESmartphone%3C/text%3E%3C/svg%3E" alt="Smartphone" class="promo-carousel-img">
+                    <a href="/products" class="promo-banner-slide promo-banner-brand flex-shrink-0" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%);">
+                        <span class="promo-banner-brand-name">Reebok</span>
+                        <span class="promo-banner-brand-tagline">Be More Human</span>
                     </a>
                 </div>
-                <div class="promo-carousel-dots flex justify-center gap-2 mt-4" id="promoCarouselDots"></div>
+                <div class="promo-banner-dots flex justify-center gap-2" id="promoCarouselDots"></div>
             </div>
         </div>
-        <script>
-            (function() {
-                var track = document.getElementById('promoCarousel');
-                var dotsEl = document.getElementById('promoCarouselDots');
-                if (!track || !dotsEl) return;
-                var slides = track.querySelectorAll('.promo-carousel-slide');
-                var n = slides.length;
-                if (n === 0) return;
-                function getCardsPerPage() {
-                    if (window.matchMedia('(max-width: 639px)').matches) return 2;
-                    if (window.matchMedia('(max-width: 767px)').matches) return 3;
-                    return 4;
-                }
-                var cardsPerPage = getCardsPerPage();
-                var totalPages = Math.max(1, Math.ceil(n / cardsPerPage));
-                dotsEl.innerHTML = '';
-                for (var p = 0; p < totalPages; p++) {
-                    var btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'promo-carousel-dot' + (p === 0 ? ' active' : '');
-                    btn.setAttribute('aria-label', 'Page ' + (p + 1));
-                    btn.dataset.page = p;
-                    (function(page) {
-                        btn.addEventListener('click', function() {
-                            var cardWidth = slides[0].offsetWidth;
-                            var gap = 16;
-                            var cpp = getCardsPerPage();
-                            var pageWidth = cardWidth * cpp + gap * (cpp - 1);
-                            track.scrollTo({ left: page * pageWidth, behavior: 'smooth' });
-                        });
-                    })(p);
-                    dotsEl.appendChild(btn);
-                }
-                var prevBtn = document.querySelector('.promo-carousel-prev');
-                var nextBtn = document.querySelector('.promo-carousel-next');
-                function go(delta) {
-                    var cardWidth = slides[0].offsetWidth;
-                    var gap = 16;
-                    var cpp = getCardsPerPage();
-                    var pageWidth = cardWidth * cpp + gap * (cpp - 1);
-                    var totalPages = Math.max(1, Math.ceil(n / cpp));
-                    var current = Math.round(track.scrollLeft / pageWidth);
-                    var next = Math.max(0, Math.min(totalPages - 1, current + delta));
-                    track.scrollTo({ left: next * pageWidth, behavior: 'smooth' });
-                }
-                if (prevBtn) prevBtn.addEventListener('click', function() { go(-1); });
-                if (nextBtn) nextBtn.addEventListener('click', function() { go(1); });
-                function updateDots() {
-                    var cardWidth = slides[0].offsetWidth;
-                    var gap = 16;
-                    var cpp = getCardsPerPage();
-                    var pageWidth = cardWidth * cpp + gap * (cpp - 1);
-                    var totalPages = Math.max(1, Math.ceil(n / cpp));
-                    var page = Math.min(totalPages - 1, Math.round(track.scrollLeft / pageWidth));
-                    dotsEl.querySelectorAll('.promo-carousel-dot').forEach(function(dot, i) {
-                        dot.classList.toggle('active', i === page);
+    <script>
+        (function() {
+            var track = document.getElementById('promoCarousel');
+            var dotsEl = document.getElementById('promoCarouselDots');
+            if (!track || !dotsEl) return;
+            var slides = track.querySelectorAll('.promo-banner-slide');
+            var n = slides.length;
+            if (n === 0) return;
+            var currentIndex = 0;
+            var autoInterval;
+            var AUTO_MS = 5000;
+
+            function goTo(index) {
+                currentIndex = (index + n) % n;
+                var slideWidth = track.offsetWidth;
+                track.scrollTo({ left: currentIndex * slideWidth, behavior: 'smooth' });
+                dotsEl.querySelectorAll('.promo-banner-dot').forEach(function(dot, i) {
+                    dot.classList.toggle('active', i === currentIndex);
+                });
+            }
+            dotsEl.innerHTML = '';
+            for (var i = 0; i < n; i++) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'promo-banner-dot' + (i === 0 ? ' active' : '');
+                btn.setAttribute('aria-label', 'Slide ' + (i + 1));
+                btn.dataset.index = i;
+                (function(idx) {
+                    btn.addEventListener('click', function() {
+                        goTo(idx);
+                        resetAuto();
+                    });
+                })(i);
+                dotsEl.appendChild(btn);
+            }
+
+            function startAuto() {
+                autoInterval = setInterval(function() {
+                    goTo(currentIndex + 1);
+                }, AUTO_MS);
+            }
+            function resetAuto() {
+                if (autoInterval) clearInterval(autoInterval);
+                startAuto();
+            }
+            track.addEventListener('mouseenter', function() { if (autoInterval) clearInterval(autoInterval); });
+            track.addEventListener('mouseleave', startAuto);
+            startAuto();
+
+            function updateDotsOnScroll() {
+                var slideWidth = track.offsetWidth;
+                if (slideWidth <= 0) return;
+                var index = Math.round(track.scrollLeft / slideWidth);
+                index = Math.max(0, Math.min(n - 1, index));
+                if (index !== currentIndex) {
+                    currentIndex = index;
+                    dotsEl.querySelectorAll('.promo-banner-dot').forEach(function(dot, i) {
+                        dot.classList.toggle('active', i === currentIndex);
                     });
                 }
-                track.addEventListener('scroll', updateDots);
-            })();
-        </script>
+            }
+            track.addEventListener('scroll', updateDotsOnScroll);
+            window.addEventListener('resize', function() { goTo(currentIndex); });
+        })();
+    </script>
 
-        <!-- Suggested products carousel (with arrows and dots) -->
+        <!-- Suggested products carousel -->
         <div class="mb-12 suggested-carousel-section" th:if="${featuredProducts != null and !featuredProducts.isEmpty()}">
-            <h2 class="carousel-title text-2xl font-bold mb-6 text-center text-gray-800">Suggested products</h2>
+            <h2 class="carousel-title text-2xl font-bold mb-6 text-center text-ink">Suggested products</h2>
             <div class="carousel-wrapper relative">
                 <button type="button" class="carousel-btn carousel-btn-prev" aria-label="Previous">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -115,7 +112,7 @@
                 </button>
                 <div class="carousel-track flex gap-6 overflow-x-auto pb-4 scroll-smooth scrollbar-hide" id="suggestedCarousel">
                     <div th:each="product : ${featuredProducts}" class="carousel-card flex-shrink-0">
-                        <a th:href="@{/products/{id}(id=${product.id})}" class="block bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all h-full">
+                        <a th:href="@{/products/{id}(id=${product.id})}" class="block bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all h-full">
                             <div class="relative h-44 bg-gray-50">
                                 <img th:if="${product.images != null and !product.images.isEmpty()}" th:src="${product.images[0]}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">
                                 <div th:unless="${product.images != null and !product.images.isEmpty()}" class="w-full h-full flex items-center justify-center text-gray-400 text-sm">No photo</div>
@@ -210,7 +207,7 @@
 
         <!-- Recommended Products -->
         <div class="mb-12" th:if="${recommendedProducts != null and !recommendedProducts.isEmpty()}">
-            <h2 class="text-2xl font-bold mb-6 text-gray-900">Recommended for You</h2>
+            <h2 class="text-2xl font-bold mb-6 text-ink">Recommended for You</h2>
             <div class="product-grid">
                 <div th:each="product : ${recommendedProducts}" class="product-card slide-up" style="display: flex; flex-direction: column;">
                     <a th:href="@{/products/{id}(id=${product.id})}" class="block flex-1" style="text-decoration: none; color: inherit;">
@@ -262,7 +259,7 @@
 
         <!-- All Products -->
         <div>
-            <h2 class="text-2xl font-bold mb-6 text-gray-900">All Products</h2>
+            <h2 class="text-2xl font-bold mb-6 text-ink">All Products</h2>
             <div class="product-grid" th:if="${products != null and !products.isEmpty()}">
                 <div th:each="product : ${products}" class="product-card slide-up" style="display: flex; flex-direction: column;">
                     <a th:href="@{/products/{id}(id=${product.id})}" class="block flex-1" style="text-decoration: none; color: inherit;">
@@ -310,7 +307,7 @@
                     </button>
                 </div>
             </div>
-            <div th:if="${products == null or products.isEmpty()}" class="text-center py-12 text-gray-500">
+            <div th:if="${products == null or products.isEmpty()}" class="text-center py-12 text-muted rounded-2xl bg-white border border-slate-200">
                 <p>No products found</p>
             </div>
 
