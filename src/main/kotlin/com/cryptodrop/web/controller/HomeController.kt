@@ -1,5 +1,6 @@
 package com.cryptodrop.web.controller
 
+import com.cryptodrop.service.CategoryService
 import com.cryptodrop.service.ProductService
 import com.cryptodrop.service.UserService
 import org.springframework.data.domain.PageRequest
@@ -11,7 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam
 @Controller
 class HomeController(
     private val productService: ProductService,
-    private val userService: UserService
+    private val userService: UserService,
+    private val categoryService: CategoryService
 ) {
 
     @GetMapping("/")
@@ -30,6 +32,7 @@ class HomeController(
         model.addAttribute("featuredProducts", featuredProducts.map { productService.toDto(it) })
         model.addAttribute("recommendedProducts", recommendedProducts.map { productService.toDto(it) })
         model.addAttribute("popularCategories", popularCategories)
+        model.addAttribute("categories", categoryService.findActive())
         model.addAttribute("products", allProducts.map { productService.toDto(it) })
         model.addAttribute("currentPage", page)
         model.addAttribute("totalPages", allProducts.totalPages)

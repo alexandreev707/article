@@ -99,8 +99,15 @@ class OrderService(
 
     @Transactional
     fun createOrdersFromCart(buyerId: UUID, dto: CheckoutDto): List<Order> {
-        val cartItems = cartService.getCartItems(buyerId)
+        var cartItems = cartService.getCartItems(buyerId)
         if (cartItems.isEmpty()) throw IllegalStateException("Cart is empty")
+
+        // If checkout was initiated for a specific product from cart,
+        // limit orders to that product only.
+        dto.cartProductId?.let { productId ->
+            cartItems = cartItems.filter { it.product.id?.toString() == productId }
+            if (cartItems.isEmpty()) throw IllegalStateException("Product not found in cart")
+        }
 
         val delivery = deliveryOptionService.findById(UUID.fromString(dto.deliveryOptionId))
         val address = when {

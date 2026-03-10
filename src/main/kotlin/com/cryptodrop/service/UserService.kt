@@ -3,6 +3,8 @@ package com.cryptodrop.service
 import com.cryptodrop.persistence.user.User
 import com.cryptodrop.persistence.user.UserRepository
 import com.cryptodrop.persistence.user.UserRole
+import com.cryptodrop.service.dto.ProfileDto
+import com.cryptodrop.service.dto.UpdateProfileDto
 import com.cryptodrop.service.dto.UserResponseDto
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.Cacheable
@@ -90,6 +92,39 @@ class UserService(
             roles = user.roles.map { "ROLE_${it.name}" }.toSet(),
             blocked = user.blocked,
             emailVerified = user.emailVerified
+        )
+    }
+
+    fun getProfile(userId: UUID): ProfileDto? {
+        val user = userRepository.findById(userId).orElse(null) ?: return null
+        return ProfileDto(
+            id = user.id!!.toString(),
+            email = user.email,
+            username = user.username,
+            fullName = user.fullName,
+            phoneNumber = user.phoneNumber,
+            walletAddress = user.walletAddress
+        )
+    }
+
+    @Transactional
+    fun updateProfile(userId: UUID, dto: UpdateProfileDto): ProfileDto {
+        val user = userRepository.findById(userId)
+            .orElseThrow { IllegalArgumentException("User not found: $userId") }
+        val updated = user.copy(
+            fullName = dto.fullName?.takeIf { it.isNotBlank() } ?: user.fullName,
+            phoneNumber = dto.phoneNumber?.takeIf { it.isNotBlank() } ?: user.phoneNumber,
+            walletAddress = dto.walletAddress?.takeIf { it.isNotBlank() } ?: user.walletAddress,
+            updatedAt = LocalDateTime.now()
+        )
+        val saved = userRepository.save(updated)
+        return ProfileDto(
+            id = saved.id!!.toString(),
+            email = saved.email,
+            username = saved.username,
+            fullName = saved.fullName,
+            phoneNumber = saved.phoneNumber,
+            walletAddress = saved.walletAddress
         )
     }
 }

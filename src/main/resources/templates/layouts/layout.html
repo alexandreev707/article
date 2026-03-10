@@ -72,7 +72,10 @@
                         </a>
                     </div>
                     <div th:if="${currentUser != null}" class="flex items-center space-x-4">
-                        <span class="site-nav-username hidden sm:inline text-sm font-medium" th:text="${currentUser.username}">User</span>
+                        <a th:href="@{/profile}" class="site-nav-username hidden sm:inline-flex sm:items-center sm:gap-2 text-sm font-medium hover:text-primary transition-colors">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <span th:text="${currentUser.username}">User</span>
+                        </a>
                         <a th:href="@{/logout}" class="btn-signout text-sm px-4 py-2 rounded-lg transition-colors">
                             Sign out
                         </a>

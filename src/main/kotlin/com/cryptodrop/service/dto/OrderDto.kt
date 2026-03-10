@@ -54,5 +54,6 @@ data class CheckoutDto(
     val deliveryOptionId: String,
     val shippingAddress: AddressDto? = null,
     val discountAmount: BigDecimal? = null,
-    val paymentMethodId: String? = null
+    val paymentMethodId: String? = null,
+    val cartProductId: String? = null
 )

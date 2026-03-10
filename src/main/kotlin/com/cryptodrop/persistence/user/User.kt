@@ -46,6 +46,9 @@ data class User(
     @Column(name = "bank_account")
     val bankAccount: String? = null,
 
+    @Column(name = "wallet_address")
+    val walletAddress: String? = null,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 

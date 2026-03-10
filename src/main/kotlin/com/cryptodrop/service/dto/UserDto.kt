@@ -14,3 +14,19 @@ data class UserUpdateDto(
     val blocked: Boolean? = null,
     val emailVerified: Boolean? = null
 )
+
+/** Profile data for current user (read-only email/username, editable fullName/phone/walletAddress) */
+data class ProfileDto(
+    val id: String,
+    val email: String,
+    val username: String,
+    val fullName: String? = null,
+    val phoneNumber: String? = null,
+    val walletAddress: String? = null
+)
+
+data class UpdateProfileDto(
+    val fullName: String? = null,
+    val phoneNumber: String? = null,
+    val walletAddress: String? = null
+)
