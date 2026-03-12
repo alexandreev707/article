@@ -6,7 +6,23 @@
 <body>
 <div th:fragment="content">
     <div class="container py-8">
-        <h1 class="text-3xl font-bold mb-8 text-gray-900">My Orders</h1>
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">My Orders</h1>
+            <div class="flex items-center gap-3">
+                <label for="statusFilter" class="text-sm text-gray-600">Status:</label>
+                <select id="statusFilter" class="form-input w-40">
+                    <option value="active" selected>Active</option>
+                    <option value="all">All</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="CONFIRMED">Confirmed</option>
+                    <option value="PROCESSING">Processing</option>
+                    <option value="SHIPPED">Shipped</option>
+                    <option value="DELIVERED">Delivered</option>
+                    <option value="CANCELLED">Cancelled</option>
+                    <option value="REFUNDED">Refunded</option>
+                </select>
+            </div>
+        </div>
 
         <div id="ordersContainer" class="table-container">
             <div class="text-center py-12">
@@ -25,6 +41,7 @@
 
     <script>
         let currentPage = 0;
+        let currentStatus = 'active';
         const pageSize = 10;
 
         async function loadOrders() {
@@ -32,7 +49,7 @@
             const pagination = document.getElementById('pagination');
 
             try {
-                const response = await fetch(`/api/orders?page=${currentPage}&size=${pageSize}`);
+                const response = await fetch(`/api/orders?page=${currentPage}&size=${pageSize}&status=${encodeURIComponent(currentStatus)}`);
                 const data = await response.json();
 
                 console.log('📥 Data:', data);
@@ -61,8 +78,19 @@
                     </thead>
                     <tbody>
                         ${orders.map(order => `
-                            <tr>
-                                <td class="font-medium">${order.productTitle}</td>
+                            <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='/products/${order.productId}'">
+                                <td>
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                            ${order.productImage
+                                                ? `<img src="${order.productImage}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none';">`
+                                                : `<div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No photo</div>`}
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="font-medium text-gray-900 line-clamp-2">${order.productTitle}</span>
+                                        </div>
+                                    </div>
+                                </td>
                                 <td>${order.quantity}</td>
                                 <td class="font-bold text-primary">$${Number(order.totalPrice).toFixed(2)}</td>
                                 <td>
@@ -107,6 +135,7 @@
             // ✅ ELEMENT CHECKS
             const prevBtn = document.getElementById('prevPage');
             const nextBtn = document.getElementById('nextPage');
+            const statusFilter = document.getElementById('statusFilter');
 
             if (prevBtn) {
                 prevBtn.addEventListener('click', () => {
@@ -120,6 +149,14 @@
             if (nextBtn) {
                 nextBtn.addEventListener('click', () => {
                     currentPage++;
+                    loadOrders();
+                });
+            }
+
+            if (statusFilter) {
+                statusFilter.addEventListener('change', () => {
+                    currentStatus = statusFilter.value || 'active';
+                    currentPage = 0;
                     loadOrders();
                 });
             }

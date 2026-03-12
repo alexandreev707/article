@@ -209,12 +209,14 @@ class OrderService(
         val item = order.items.firstOrNull()
             ?: throw IllegalStateException("Order has no items")
         val product = productTitle ?: item.product.title
+        val imageUrl = item.product.images.firstOrNull()
         return OrderResponseDto(
             id = order.id.toString(),
             buyerId = order.buyer.id!!.toString(),
             sellerId = item.seller.id!!.toString(),
             productId = item.product.id!!.toString(),
             productTitle = product,
+            productImage = imageUrl,
             quantity = item.quantity,
             totalPrice = item.totalPrice,
             discountAmount = order.discountAmount.takeIf { it > BigDecimal.ZERO },

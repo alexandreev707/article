@@ -1,5 +1,6 @@
 package com.cryptodrop.web.controller
 
+import com.cryptodrop.persistence.order.OrderStatus
 import com.cryptodrop.service.OrderService
 import com.cryptodrop.service.UserService
 import com.cryptodrop.service.dto.OrderCreateDto
@@ -32,15 +33,47 @@ class OrderController(
     @PreAuthorize("hasAnyRole('CUSTOMER', 'SELLER', 'ADMIN')")
     fun getMyOrders(
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "10") size: Int
+        @RequestParam(defaultValue = "10") size: Int,
+        @RequestParam(required = false) status: String?
     ): ResponseEntity<Map<String, Any>> {
         val userId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
-        val orders = orderService.findByBuyer(userId, PageRequest.of(page, size))
-        return ResponseEntity.ok(mapOf(
-            "orders" to orders.map { orderService.toDto(it) },
-            "totalPages" to orders.totalPages,
-            "currentPage" to page
-        ))
+        val isSeller = userService.hasRole("SELLER") || userService.hasRole("ADMIN")
+        return if (isSeller) {
+            // For sellers: show all orders (no filter for now)
+            val ordersPage = orderService.findBySeller(userId, PageRequest.of(page, size))
+            ResponseEntity.ok(
+                mapOf(
+                    "orders" to ordersPage.map { orderService.toDto(it) },
+                    "totalPages" to ordersPage.totalPages,
+                    "currentPage" to page
+                )
+            )
+        } else {
+            // For buyers: default = only active, optional status filter
+            val pageResult = orderService.findByBuyer(userId, PageRequest.of(page, size))
+            val statusFilter = status?.uppercase()
+            val activeStatuses = setOf(
+                OrderStatus.PENDING,
+                OrderStatus.CONFIRMED,
+                OrderStatus.PROCESSING,
+                OrderStatus.SHIPPED
+            )
+            val filteredContent = when {
+                statusFilter == null || statusFilter == "ACTIVE" -> pageResult.content.filter { it.status in activeStatuses }
+                statusFilter == "ALL" -> pageResult.content
+                else -> {
+                    val parsed = runCatching { OrderStatus.valueOf(statusFilter) }.getOrNull()
+                    if (parsed != null) pageResult.content.filter { it.status == parsed } else pageResult.content
+                }
+            }
+            ResponseEntity.ok(
+                mapOf(
+                    "orders" to filteredContent.map { orderService.toDto(it) },
+                    "totalPages" to pageResult.totalPages,
+                    "currentPage" to page
+                )
+            )
+        }
     }
 
     @GetMapping("/{id}")

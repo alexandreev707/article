@@ -35,6 +35,7 @@ data class OrderResponseDto(
     val sellerId: String,
     val productId: String,
     val productTitle: String? = null,
+    val productImage: String? = null,
     val quantity: Int,
     val totalPrice: BigDecimal,
     val discountAmount: BigDecimal? = null,
