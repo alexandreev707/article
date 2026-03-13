@@ -5,7 +5,8 @@ spring:
     clean-disabled: true
     validate-on-migrate: true
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}
+    # Render (и многие облачные Postgres) требуют SSL — без sslmode=require часто EOF при auth
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}?sslmode=${DB_SSL_MODE:require}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver

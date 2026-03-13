@@ -15,5 +15,6 @@ RUN addgroup -S app && adduser -S app -G app
 COPY --from=build /app/build/libs/*.jar app.jar
 USER app
 ENV JAVA_OPTS=""
+ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -Dserver.port=${PORT:-8080} -jar app.jar"]
