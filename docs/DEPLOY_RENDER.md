@@ -25,11 +25,10 @@
 3. **Применить**  
    Render создаст:
    - **PostgreSQL** (`marketplace-db`)
-   - **Web Service** (`marketplace-mvp`) с переменными `DB_*` из БД
+   - **Web Service** (`marketplace-mvp`, **Docker**) с переменными `DB_*` из БД
 
 4. **Дождаться деплоя**  
-   Сборка: `./gradlew clean build -x test`  
-   Старт: JAR `marketplace-mvp-1.0.0.jar` на порту из `$PORT`
+   Сборка и старт идут из **`Dockerfile`** (Gradle → JAR → Java 17). Порт задаётся через `$PORT` от Render.
 
 5. **Открыть URL**  
    После успешного деплоя откройте выданный адрес вида `https://marketplace-mvp.onrender.com`
@@ -40,9 +39,8 @@
 
 1. **New PostgreSQL** — запомните Internal Database URL / host, user, password, database.
 2. **New Web Service** — тот же репозиторий:
-   - **Runtime:** Java  
-   - **Build:** `chmod +x ./gradlew && ./gradlew clean build -x test --no-daemon`  
-   - **Start:** `java -Dserver.port=$PORT -jar build/libs/marketplace-mvp-1.0.0.jar`
+   - **Environment:** Docker  
+   - **Dockerfile Path:** `./Dockerfile`
 3. **Environment variables:**
    - `SPRING_PROFILES_ACTIVE` = `prod`
    - `DB_HOST`, `DB_PORT` (обычно `5432`), `DB_NAME`, `DB_USER`, `DB_PASSWORD` — как у вашей БД на Render
