@@ -35,6 +35,7 @@ class SecurityConfig {
                         "/api/reviews/product/**"
                     ).permitAll()
                     .requestMatchers("/", "/login", "/logout", "/error", "/h2-console/**").permitAll()
+                    .requestMatchers("/actuator/health", "/actuator/info").permitAll()
 
                     // ✅ Роли после публичных ресурсов
                     .requestMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")

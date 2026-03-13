@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/layout}">
+<head>
+    <title>Feature products - Marketplace</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="container py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">Feature products</h1>
+                <a th:href="@{/admin}" class="btn-secondary">← Dashboard</a>
+            </div>
+            <p class="text-gray-600 mb-6">Select a seller to manage their products and pin them to the homepage carousel.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" th:if="${sellers != null and !sellers.isEmpty()}">
+                <a th:each="seller : ${sellers}"
+                   th:href="@{/admin/sellers/{id}/products(id=${seller.id})}"
+                   class="card p-6 hover:shadow-lg transition-all flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-xl">👤</div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900" th:text="${seller.username}">Seller</h3>
+                        <p class="text-sm text-gray-500" th:text="${seller.email}">email</p>
+                    </div>
+                    <span class="ml-auto text-primary font-medium">View products →</span>
+                </a>
+            </div>
+            <div th:if="${sellers == null or sellers.isEmpty()}" class="text-center py-12 text-gray-500">No sellers found.</div>
+        </div>
+    </div>
+</body>
+</html>

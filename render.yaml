@@ -1,0 +1,42 @@
+# Render Blueprint — путь в репозитории: render.yaml (корень)
+# В панели Render: Blueprint Path = render.yaml (или оставить по умолчанию)
+
+databases:
+  - name: marketplace-db
+    databaseName: marketplace
+    user: marketplace
+    plan: free   # при необходимости смените на paid
+
+services:
+  - type: web
+    name: marketplace-mvp
+    runtime: java
+    plan: free   # при необходимости — starter / standard
+    buildCommand: chmod +x ./gradlew && ./gradlew clean build -x test --no-daemon
+    startCommand: java -Dserver.port=$PORT -jar build/libs/marketplace-mvp-1.0.0.jar
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JAVA_VERSION
+        value: "17"
+      - key: DB_HOST
+        fromDatabase:
+          name: marketplace-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: marketplace-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: marketplace-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: marketplace-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: marketplace-db
+          property: password
