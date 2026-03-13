@@ -64,6 +64,6 @@
 | Build failed | Логи Build — версия Java 17, права на `./gradlew` |
 | DB connection refused | `DB_HOST` — для Web Service нужен **Internal** host БД на Render |
 | **`UnknownHostException: dpg-...`** | В **DB_HOST** указано **короткое** имя без домена. Нужен **полный FQDN** из URL подключения, например: `dpg-xxxxx-a.oregon-postgres.render.com` (не только `dpg-xxxxx-a`). Скопируй хост из **Internal** или **External Database URL** в панели БД. |
-| **`EOFException` при подключении к Postgres** | Часто не хватает **SSL**. В `application-prod` уже стоит `sslmode=require`. Убедись, что задеплоена **свежая сборка**. Плюс проверь **DB_USER** / **DB_PASSWORD** (без лишних пробелов). На своём VPS без TLS задай `DB_SSL_MODE=disable`. |
+| **`EOFException` при подключении к Postgres** | 1) В Web Service нажми **Link Database** к PostgreSQL — Render подставит **`DATABASE_URL`**. Приложение само разберёт URL и подключится с SSL. 2) Либо в Environment вручную добавь **`DATABASE_URL`** = **External Database URL** из панели БД (строка `postgresql://...`). 3) Если только **internal** URL и снова EOF — задай **`DB_SSL_MODE=disable`** (внутренняя сеть Render иногда без TLS на wire). 4) Старый вариант через **DB_HOST** + **DB_NAME** + … — хост только **полный FQDN** (`…oregon-postgres.render.com`). |
 | 502 после старта | Логи Runtime — ошибки Flyway или порта |
 | Неверное имя JAR | После `./gradlew build` имя в `build/libs/` = `marketplace-mvp-1.0.0.jar` (см. `settings.gradle.kts` + `version` в `build.gradle.kts`) |
