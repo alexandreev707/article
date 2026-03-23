@@ -207,6 +207,29 @@ keycloak:
   resource: marketplace-client
 ```
 
+### OxaPay переменные окружения
+
+Для крипто-оплаты через OxaPay задайте:
+
+- `OXAPAY_ENABLED`
+- `OXAPAY_SANDBOX_ENABLED`
+- `OXAPAY_SANDBOX_MERCHANT`
+- `OXAPAY_BASE_URL`
+- `OXAPAY_MERCHANT_API_KEY`
+- `OXAPAY_PAYOUT_API_KEY`
+- `OXAPAY_CALLBACK_URL`
+- `OXAPAY_RETURN_URL`
+- `OXAPAY_INVOICE_LIFETIME_MINUTES`
+- `OXAPAY_CURRENCY`
+
+Пример значений есть в `.env.example`.
+
+Для sandbox-тестов:
+
+- установите `OXAPAY_SANDBOX_ENABLED=true`
+- можно использовать `OXAPAY_SANDBOX_MERCHANT=sandbox`
+- при sandbox в запрос инвойса автоматически добавляется `sandbox: true`
+
 ## Тестирование
 
 Запуск тестов:

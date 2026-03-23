@@ -29,3 +29,15 @@ logging:
     root: INFO
     com.cryptodrop: INFO
     org.springframework.security: WARN
+
+oxapay:
+  enabled: ${OXAPAY_ENABLED:true}
+  sandbox-enabled: ${OXAPAY_SANDBOX_ENABLED:false}
+  sandbox-merchant: ${OXAPAY_SANDBOX_MERCHANT:sandbox}
+  base-url: ${OXAPAY_BASE_URL:https://api.oxapay.com}
+  merchant-api-key: ${OXAPAY_MERCHANT_API_KEY}
+  payout-api-key: ${OXAPAY_PAYOUT_API_KEY:}
+  callback-url: ${OXAPAY_CALLBACK_URL}
+  return-url: ${OXAPAY_RETURN_URL}
+  invoice-lifetime-minutes: ${OXAPAY_INVOICE_LIFETIME_MINUTES:30}
+  currency: ${OXAPAY_CURRENCY:USD}

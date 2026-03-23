@@ -32,7 +32,8 @@ class SecurityConfig {
                         "/products/**", "/api/products/**",
                         "/api/categories", "/api/categories/*",
                         "/api/delivery-options", "/api/delivery-options/*",
-                        "/api/reviews/product/**"
+                        "/api/reviews/product/**",
+                        "/api/checkout/oxapay/callback"
                     ).permitAll()
                     .requestMatchers("/", "/login", "/logout", "/error", "/h2-console/**").permitAll()
                     .requestMatchers("/actuator/health", "/actuator/info").permitAll()

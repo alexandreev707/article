@@ -8,6 +8,7 @@ import com.cryptodrop.service.dto.OrderResponseDto
 import com.cryptodrop.service.dto.OrderStatusUpdateDto
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -38,9 +39,9 @@ class OrderController(
     ): ResponseEntity<Map<String, Any>> {
         val userId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
         val isSeller = userService.hasRole("SELLER") || userService.hasRole("ADMIN")
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
         return if (isSeller) {
-            // For sellers: show all orders (no filter for now)
-            val ordersPage = orderService.findBySeller(userId, PageRequest.of(page, size))
+            val ordersPage = orderService.findBySeller(userId, pageable)
             ResponseEntity.ok(
                 mapOf(
                     "orders" to ordersPage.map { orderService.toDto(it) },
@@ -49,8 +50,7 @@ class OrderController(
                 )
             )
         } else {
-            // For buyers: default = only active, optional status filter
-            val pageResult = orderService.findByBuyer(userId, PageRequest.of(page, size))
+            val pageResult = orderService.findByBuyer(userId, pageable)
             val statusFilter = status?.uppercase()
             val activeStatuses = setOf(
                 OrderStatus.PENDING,

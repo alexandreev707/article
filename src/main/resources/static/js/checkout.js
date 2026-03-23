@@ -69,8 +69,6 @@
                 window.location.href = '/cart';
                 return;
             }
-
-            // If checkout initiated for a specific product from cart, keep only that item
             if (cartProductId) {
                 const item = (cart.items || []).find(i => i.productId === cartProductId);
                 if (!item) {
@@ -82,7 +80,6 @@
                 cart.totalItems = item.quantity;
                 cart.subtotal = Number(item.price) * item.quantity;
             }
-
             updateSummary();
         } catch (e) {
             showToast('Failed to load cart', 'error');
@@ -99,8 +96,6 @@
             document.getElementById('deliveryOptions').innerHTML = '<p class="text-red-500">Failed to load delivery options.</p>';
         }
     }
-
-    let pendingOrderIds = [];
 
     async function submitCheckout() {
         if (!selectedDeliveryId) {
@@ -119,11 +114,9 @@
             const response = await fetch('/api/checkout', opt);
             if (!response.ok) throw new Error(await response.text());
             const res = await response.json();
-            pendingOrderIds = res.orderIds || (res.orders || []).map(function(o) { return o.id; }) || [];
-            btn.disabled = false;
-            btn.textContent = 'Proceed to payment';
-            document.getElementById('testBankModal').classList.remove('hidden');
-            document.getElementById('testBankModal').classList.add('flex');
+            const paymentUrl = res.paymentUrl;
+            if (!paymentUrl) throw new Error('Payment URL is not available');
+            window.location.href = paymentUrl;
         } catch (e) {
             btn.disabled = false;
             btn.textContent = 'Proceed to payment';
@@ -131,34 +124,8 @@
         }
     }
 
-    async function confirmPayment() {
-        if (pendingOrderIds.length === 0) {
-            showToast('No orders to pay', 'error');
-            return;
-        }
-        const payBtn = document.getElementById('testBankPay');
-        payBtn.disabled = true;
-        payBtn.textContent = 'Processing...';
-        try {
-            await api('POST', '/api/checkout/confirm-payment', { orderIds: pendingOrderIds });
-            showToast('Payment successful!', 'success');
-            document.getElementById('testBankModal').classList.add('hidden');
-            document.getElementById('testBankModal').classList.remove('flex');
-            setTimeout(() => { window.location.href = '/orders'; }, 1500);
-        } catch (e) {
-            payBtn.disabled = false;
-            payBtn.textContent = 'Pay';
-            showToast(e.message || 'Payment failed', 'error');
-        }
-    }
-
     document.addEventListener('DOMContentLoaded', function() {
         loadCart().then(() => loadDeliveryOptions());
         document.getElementById('payBtn').addEventListener('click', submitCheckout);
-        document.getElementById('testBankCancel').addEventListener('click', () => {
-            document.getElementById('testBankModal').classList.add('hidden');
-            document.getElementById('testBankModal').classList.remove('flex');
-        });
-        document.getElementById('testBankPay').addEventListener('click', confirmPayment);
     });
 })();

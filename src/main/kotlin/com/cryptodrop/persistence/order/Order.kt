@@ -58,6 +58,15 @@ data class Order(
     @Column(name = "payment_status")
     var paymentStatus: PaymentStatus = PaymentStatus.PENDING,
 
+    @Column(name = "oxapay_track_id")
+    var oxapayTrackId: String? = null,
+
+    @Column(name = "oxapay_payment_url", columnDefinition = "TEXT")
+    var oxapayPaymentUrl: String? = null,
+
+    @Column(name = "oxapay_payout_track_id")
+    var oxapayPayoutTrackId: String? = null,
+
     @Embedded
     val shippingAddress: Address,
 
@@ -95,7 +104,8 @@ enum class PaymentMethod {
     CARD,
     CASH_ON_DELIVERY,
     BANK_TRANSFER,
-    ELECTRONIC_WALLET
+    ELECTRONIC_WALLET,
+    OXAPAY
 }
 
 enum class PaymentStatus {

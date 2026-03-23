@@ -23,4 +23,6 @@ interface OrderRepository : JpaRepository<Order, UUID> {
         @Param("status") status: OrderStatus,
         pageable: Pageable
     ): Page<Order>
+
+    fun findByOxapayTrackId(oxapayTrackId: String): Order?
 }

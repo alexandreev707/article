@@ -5,6 +5,7 @@ import com.cryptodrop.persistence.order.Order
 import com.cryptodrop.persistence.order.OrderItem
 import com.cryptodrop.persistence.order.OrderRepository
 import com.cryptodrop.persistence.order.OrderStatus
+import com.cryptodrop.persistence.order.PaymentMethod
 import com.cryptodrop.persistence.order.PaymentStatus
 import com.cryptodrop.persistence.product.ProductStatus
 import com.cryptodrop.persistence.product.ProductRepository
@@ -30,7 +31,8 @@ class OrderService(
     private val productService: ProductService,
     private val userService: UserService,
     private val cartService: CartService,
-    private val deliveryOptionService: DeliveryOptionService
+    private val deliveryOptionService: DeliveryOptionService,
+    private val oxapayService: OxapayService
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
@@ -102,8 +104,6 @@ class OrderService(
         var cartItems = cartService.getCartItems(buyerId)
         if (cartItems.isEmpty()) throw IllegalStateException("Cart is empty")
 
-        // If checkout was initiated for a specific product from cart,
-        // limit orders to that product only.
         dto.cartProductId?.let { productId ->
             cartItems = cartItems.filter { it.product.id?.toString() == productId }
             if (cartItems.isEmpty()) throw IllegalStateException("Product not found in cart")
@@ -149,7 +149,8 @@ class OrderService(
                 discountAmount = itemDiscount,
                 totalPrice = totalPrice,
                 shippingAddress = address,
-                deliveryOption = delivery
+                deliveryOption = delivery,
+                paymentMethod = PaymentMethod.OXAPAY
             )
             val orderItem = OrderItem(
                 order = order,
@@ -166,12 +167,26 @@ class OrderService(
                 updatedAt = LocalDateTime.now()
             ))
 
-            orders.add(orderRepository.save(order))
+            val savedOrder = orderRepository.save(order)
+            val invoice = oxapayService.createInvoice(savedOrder.id!!.toString(), totalPrice)
+            savedOrder.oxapayTrackId = invoice.trackId
+            savedOrder.oxapayPaymentUrl = invoice.paymentUrl
+            orders.add(orderRepository.save(savedOrder))
             cartService.removeItem(buyerId, product.id!!)
         }
 
         logger.info("Created ${orders.size} orders from cart for buyer: $buyerId")
         return orders
+    }
+
+    @Transactional
+    fun confirmPaymentByTrackId(trackId: String): Order {
+        val order = orderRepository.findByOxapayTrackId(trackId)
+            ?: throw IllegalArgumentException("Order not found for OxaPay track id: $trackId")
+        order.paymentStatus = PaymentStatus.PAID
+        order.status = OrderStatus.CONFIRMED
+        order.updatedAt = LocalDateTime.now()
+        return orderRepository.save(order)
     }
 
     fun findByBuyer(buyerId: UUID, pageable: Pageable): Page<Order> {
