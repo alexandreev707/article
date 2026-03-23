@@ -43,7 +43,11 @@ data class OrderResponseDto(
     val paymentStatus: PaymentStatus? = null,
     val shippingAddress: AddressDto,
     val createdAt: String,
-    val updatedAt: String
+    val updatedAt: String,
+    /** Set when buyer confirms receipt (order completed) */
+    val deliveredAt: String? = null,
+    /** OxaPay payout track id after seller withdraws funds */
+    val payoutTrackId: String? = null,
 )
 
 data class OrderStatusUpdateDto(

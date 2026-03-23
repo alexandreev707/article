@@ -16,4 +16,8 @@ class OxapayProperties {
     var returnUrl: String = ""
     var invoiceLifetimeMinutes: Int = 30
     var currency: String = "USD"
+    /** Cryptocurrency symbol for seller payouts (e.g. USDT, BTC) */
+    var payoutCurrency: String = "USDT"
+    /** Blockchain network (required by OxaPay for USDT; default TRC20). Override via OXAPAY_PAYOUT_NETWORK. */
+    var payoutNetwork: String = "TRC20"
 }

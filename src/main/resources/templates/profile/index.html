@@ -30,7 +30,8 @@
                         </div>
                         <div th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).ADMIN))}">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Адрес кошелька для перевода средств</label>
-                            <input type="text" id="walletAddress" name="walletAddress" placeholder="0x... или другой адрес кошелька" class="form-input w-full" />
+                            <input type="text" id="walletAddress" name="walletAddress" placeholder="Tron T… (для USDT TRC20) или 0x… (для ERC20)" class="form-input w-full" />
+                            <p class="text-xs text-gray-500 mt-1">Сеть задаётся в OXAPAY_PAYOUT_NETWORK (по умолчанию TRC20). Адрес должен совпадать с сетью: Tron ≠ Ethereum.</p>
                         </div>
                         <button type="submit" id="saveBtn" class="btn-primary px-6 py-2.5">
                             Сохранить

@@ -95,4 +95,22 @@ class OrderController(
         val order = orderService.updateOrderStatus(UUID.fromString(id), sellerId, dto)
         return ResponseEntity.ok(orderService.toDto(order))
     }
+
+    /** Buyer confirms goods received → order status DELIVERED (completed). */
+    @PostMapping("/{id}/confirm-delivery")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    fun confirmDelivery(@PathVariable id: String): ResponseEntity<OrderResponseDto> {
+        val buyerId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
+        val order = orderService.markDeliveredByBuyer(UUID.fromString(id), buyerId)
+        return ResponseEntity.ok(orderService.toDto(order))
+    }
+
+    /** Seller withdraws order amount to wallet via OxaPay (after DELIVERED). */
+    @PostMapping("/{id}/payout")
+    @PreAuthorize("hasRole('SELLER') or hasRole('ADMIN')")
+    fun requestPayout(@PathVariable id: String): ResponseEntity<OrderResponseDto> {
+        val sellerId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
+        val order = orderService.requestSellerPayout(UUID.fromString(id), sellerId)
+        return ResponseEntity.ok(orderService.toDto(order))
+    }
 }

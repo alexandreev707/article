@@ -59,8 +59,10 @@ oxapay:
   sandbox-merchant: ${OXAPAY_SANDBOX_MERCHANT:sandbox}
   base-url: ${OXAPAY_BASE_URL:https://api.oxapay.com}
   merchant-api-key: ${OXAPAY_MERCHANT_API_KEY:NDVCVU-EVE3JI-I0GHHV-OLC9X7}
-  payout-api-key: ${OXAPAY_PAYOUT_API_KEY:}
+  payout-api-key: ${OXAPAY_PAYOUT_API_KEY:8XYTFV-G9AZEC-XC6CNZ-61NPFI}
   callback-url: ${OXAPAY_CALLBACK_URL:http://localhost:8082/api/checkout/oxapay/callback}
   return-url: ${OXAPAY_RETURN_URL:http://localhost:8082/orders}
   invoice-lifetime-minutes: ${OXAPAY_INVOICE_LIFETIME_MINUTES:30}
   currency: ${OXAPAY_CURRENCY:USD}
+  payout-currency: ${OXAPAY_PAYOUT_CURRENCY:USDT}
+  payout-network: ${OXAPAY_PAYOUT_NETWORK:TRC20}

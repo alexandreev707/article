@@ -19,10 +19,10 @@
                 <div th:each="order : ${orders}" class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div class="flex-1">
-                            <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <div class="flex flex-wrap items-center gap-1 mb-2">
                                 <span class="font-mono text-sm text-gray-500" th:text="${order.id}">Order ID</span>
                                 <span class="px-2 py-0.5 rounded text-xs font-medium"
-                                      th:classappend="${order.status.name == 'CONFIRMED' or order.status.name == 'PROCESSING'} ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
+                                      th:classappend="${order.status.name == 'DELIVERED'} ? 'bg-emerald-100 text-emerald-800' : (${order.status.name == 'SHIPPED'} ? 'bg-blue-100 text-blue-800' : (${order.status.name == 'CONFIRMED' or order.status.name == 'PROCESSING'} ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'))"
                                       th:text="${order.status}">Status</span>
                                 <span class="px-2 py-0.5 rounded text-xs font-medium"
                                       th:classappend="${order.paymentStatus != null and order.paymentStatus.name == 'PAID'} ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'"
@@ -32,9 +32,30 @@
                             <p class="text-sm text-gray-600">Qty: <span th:text="${order.quantity}">1</span> × $<span th:text="${#numbers.formatDecimal(order.totalPrice, 1, 2)}">0.00</span></p>
                             <p class="text-sm text-gray-500 mt-1" th:text="'Ordered: ' + ${order.createdAt}">Date</p>
                         </div>
-                        <div class="text-left md:text-right">
+                        <div class="text-left md:text-right flex flex-col items-stretch md:items-end gap-3">
                             <p class="text-xl font-bold text-primary" th:text="'$' + ${#numbers.formatDecimal(order.totalPrice, 1, 2)}">$0.00</p>
                             <p class="text-xs text-green-600 mt-1" th:if="${order.paymentStatus != null and order.paymentStatus.name == 'PAID'}">✓ Funds credited</p>
+                            <button type="button"
+                                    class="btn-primary px-4 py-2 text-sm whitespace-nowrap ship-order-btn"
+                                    th:if="${order.paymentStatus != null and order.paymentStatus.name == 'PAID'
+                                        and order.status.name != 'SHIPPED'
+                                        and order.status.name != 'DELIVERED'
+                                        and order.status.name != 'CANCELLED'
+                                        and order.status.name != 'REFUNDED'}"
+                                    th:attr="data-order-id=${order.id}">
+                                Отправить заказ
+                            </button>
+                            <button type="button"
+                                    class="btn-primary px-4 py-2 text-sm whitespace-nowrap payout-order-btn"
+                                    th:if="${order.status.name == 'DELIVERED'
+                                        and order.paymentStatus != null and order.paymentStatus.name == 'PAID'
+                                        and (order.payoutTrackId == null or #strings.isEmpty(order.payoutTrackId))}"
+                                    th:attr="data-order-id=${order.id}">
+                                Вывести средства
+                            </button>
+                            <p class="text-xs text-emerald-700 max-w-xs text-right" th:if="${order.payoutTrackId != null and !#strings.isEmpty(order.payoutTrackId)}">
+                                Выплата оформлена (OxaPay): <span class="font-mono" th:text="${order.payoutTrackId}">—</span>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -50,6 +71,36 @@
                 <a th:if="${currentPage < totalPages - 1}" th:href="@{/seller/orders(page=${currentPage + 1})}" class="btn-secondary px-6 py-2">Next →</a>
             </div>
         </div>
+
+        <!-- Ошибка OxaPay при выводе (неверный адрес и т.д.) -->
+        <div id="payoutErrorModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4" aria-hidden="true">
+            <div id="payoutErrorModalBackdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Не удалось вывести средства</h3>
+                <p class="text-gray-600 text-sm mb-6 whitespace-pre-wrap" id="payoutErrorModalText"></p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-end">
+                    <button type="button" id="payoutErrorModalClose" class="btn-secondary px-4 py-2">Закрыть</button>
+                    <a th:href="@{/profile}" class="btn-primary px-4 py-2 text-center">Профиль</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно: нужен адрес кошелька для вывода -->
+        <div id="walletRequiredModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4" aria-hidden="true">
+            <div id="walletRequiredModalBackdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Нужен адрес кошелька</h3>
+                <p class="text-gray-600 text-sm mb-6" id="walletRequiredModalText">
+                    Укажите адрес криптокошелька в профиле — на него будут отправлены средства через OxaPay после вывода.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-end">
+                    <button type="button" id="walletRequiredModalClose" class="btn-secondary px-4 py-2 order-2 sm:order-1">Закрыть</button>
+                    <a th:href="@{/profile}" class="btn-primary px-4 py-2 text-center order-1 sm:order-2">Перейти в профиль</a>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/js/seller-orders.js}"></script>
     </div>
 </body>
 </html>

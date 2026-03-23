@@ -14,6 +14,7 @@ import com.cryptodrop.service.dto.CheckoutDto
 import com.cryptodrop.service.dto.OrderCreateDto
 import com.cryptodrop.service.dto.OrderResponseDto
 import com.cryptodrop.service.dto.OrderStatusUpdateDto
+import com.cryptodrop.web.error.WalletRequiredException
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -92,6 +93,25 @@ class OrderService(
             .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
         val hasSellerItem = order.items.any { it.seller.id == sellerId }
         if (!hasSellerItem) throw IllegalStateException("Only order seller can update status")
+
+        if (dto.status == OrderStatus.DELIVERED) {
+            throw IllegalStateException("Delivered status is set by the buyer after receipt")
+        }
+
+        if (dto.status == OrderStatus.SHIPPED) {
+            if (order.paymentStatus != PaymentStatus.PAID) {
+                throw IllegalStateException("Cannot ship: payment is not completed")
+            }
+            if (order.status in setOf(
+                    OrderStatus.SHIPPED,
+                    OrderStatus.DELIVERED,
+                    OrderStatus.CANCELLED,
+                    OrderStatus.REFUNDED
+                )
+            ) {
+                throw IllegalStateException("Order cannot be shipped in current status: ${order.status}")
+            }
+        }
 
         order.status = dto.status
         order.updatedAt = LocalDateTime.now()
@@ -220,6 +240,59 @@ class OrderService(
         return updated
     }
 
+    @Transactional
+    fun markDeliveredByBuyer(orderId: UUID, buyerId: UUID): Order {
+        val order = orderRepository.findById(orderId)
+            .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
+        if (order.buyer.id != buyerId) {
+            throw IllegalStateException("Only the buyer can confirm delivery")
+        }
+        if (order.status != OrderStatus.SHIPPED) {
+            throw IllegalStateException("Order must be shipped before confirming receipt (current: ${order.status})")
+        }
+        order.status = OrderStatus.DELIVERED
+        order.deliveredAt = LocalDateTime.now()
+        order.updatedAt = LocalDateTime.now()
+        logger.info("Order marked delivered by buyer: $orderId")
+        return orderRepository.save(order)
+    }
+
+    @Transactional
+    fun requestSellerPayout(orderId: UUID, sellerId: UUID): Order {
+        val order = orderRepository.findById(orderId)
+            .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
+        val hasSellerItem = order.items.any { it.seller.id == sellerId }
+        if (!hasSellerItem) throw IllegalStateException("Only the seller of this order can request payout")
+        if (order.paymentStatus != PaymentStatus.PAID) {
+            throw IllegalStateException("Payout is only available after payment is completed")
+        }
+        if (order.status != OrderStatus.DELIVERED) {
+            throw IllegalStateException("Payout is only available after the buyer confirms receipt")
+        }
+        if (order.oxapayPayoutTrackId != null) {
+            throw IllegalStateException("Payout has already been requested for this order")
+        }
+        if (order.paymentMethod != PaymentMethod.OXAPAY && order.oxapayTrackId.isNullOrBlank()) {
+            throw IllegalStateException("This order was not paid via OxaPay")
+        }
+
+        val seller = userService.findById(sellerId)
+        val wallet = seller.walletAddress?.trim().orEmpty()
+        if (wallet.isBlank()) {
+            throw WalletRequiredException("Укажите адрес кошелька в профиле для вывода средств")
+        }
+
+        val trackId = oxapayService.createPayout(
+            recipientAddress = wallet,
+            amount = order.totalPrice,
+            description = "Order ${order.orderNumber} (${order.id})"
+        )
+        order.oxapayPayoutTrackId = trackId
+        order.updatedAt = LocalDateTime.now()
+        logger.info("OxaPay payout requested for order $orderId, trackId=$trackId")
+        return orderRepository.save(order)
+    }
+
     fun toDto(order: Order, productTitle: String? = null): OrderResponseDto {
         val item = order.items.firstOrNull()
             ?: throw IllegalStateException("Order has no items")
@@ -245,7 +318,9 @@ class OrderService(
                 country = order.shippingAddress.country
             ),
             createdAt = order.createdAt.format(dateFormatter),
-            updatedAt = order.updatedAt.format(dateFormatter)
+            updatedAt = order.updatedAt.format(dateFormatter),
+            deliveredAt = order.deliveredAt?.format(dateFormatter),
+            payoutTrackId = order.oxapayPayoutTrackId
         )
     }
 }

@@ -87,7 +87,7 @@ data class Order(
     var updatedAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "delivered_at")
-    val deliveredAt: LocalDateTime? = null
+    var deliveredAt: LocalDateTime? = null
 )
 
 enum class OrderStatus {

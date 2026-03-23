@@ -43,6 +43,14 @@
         let currentStatus = 'active';
         const pageSize = 10;
 
+        function paymentBadgeClass(ps) {
+            if (!ps) return 'badge-warning';
+            if (ps === 'PAID') return 'badge-success';
+            if (ps === 'FAILED') return 'badge-danger';
+            if (ps === 'REFUNDED') return 'badge-info';
+            return 'badge-warning';
+        }
+
         async function loadOrders() {
             const container = document.getElementById('ordersContainer');
             const pagination = document.getElementById('pagination');
@@ -58,10 +66,13 @@
                     return;
                 }
 
-                container.innerHTML = '<table><thead><tr><th>Product</th><th>Quantity</th><th>Total</th><th>Status</th><th>Date</th></tr></thead><tbody>' +
-                    orders.map(order => `
-                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location.href='/products/${order.productId}'">
-                            <td>
+                container.innerHTML = '<table><thead><tr><th>Product</th><th>Quantity</th><th>Total</th><th>Order status</th><th>Payment</th><th>Date</th><th></th></tr></thead><tbody>' +
+                    orders.map(order => {
+                        const pay = order.paymentStatus || 'PENDING';
+                        const showDeliveryBtn = order.status === 'SHIPPED';
+                        return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="cursor-pointer" onclick="window.location.href='/products/${order.productId}'">
                                 <div class="flex items-center gap-3">
                                     <div class="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                                         ${order.productImage ? '<img src="' + order.productImage + '" alt="" class="w-full h-full object-cover" onerror="this.style.display=\'none\'">' : '<div class="w-full h-full flex items-center justify-center text-gray-400 text-xs">No photo</div>'}
@@ -72,9 +83,37 @@
                             <td>${order.quantity}</td>
                             <td class="font-bold text-primary">$${Number(order.totalPrice).toFixed(2)}</td>
                             <td><span class="badge ${order.status === 'DELIVERED' ? 'badge-success' : order.status === 'CANCELLED' ? 'badge-danger' : order.status === 'SHIPPED' ? 'badge-info' : order.status === 'CONFIRMED' ? 'badge-primary' : 'badge-warning'}">${order.status}</span></td>
+                            <td><span class="badge ${paymentBadgeClass(order.paymentStatus)}">${pay}</span></td>
                             <td class="text-gray-500 text-sm">${new Date(order.createdAt).toLocaleDateString()}</td>
+                            <td class="whitespace-nowrap">${showDeliveryBtn ? '<button type="button" class="btn-primary text-sm px-3 py-1.5 confirm-delivery-btn" data-order-id="' + order.id + '">Заказ получен</button>' : ''}</td>
                         </tr>
-                    `).join('') + '</tbody></table>';
+                    `;
+                    }).join('') + '</tbody></table>';
+
+                container.querySelectorAll('.confirm-delivery-btn').forEach(function (btn) {
+                    btn.addEventListener('click', async function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var oid = btn.getAttribute('data-order-id');
+                        if (!oid) return;
+                        btn.disabled = true;
+                        var lab = btn.textContent;
+                        btn.textContent = '…';
+                        try {
+                            var res = await fetch('/api/orders/' + encodeURIComponent(oid) + '/confirm-delivery', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+                            if (!res.ok) throw new Error(await res.text());
+                            loadOrders();
+                        } catch (err) {
+                            console.error(err);
+                            alert('Не удалось подтвердить получение. ' + (err.message || ''));
+                            btn.disabled = false;
+                            btn.textContent = lab;
+                        }
+                    });
+                });
 
                 document.getElementById('pageInfo').textContent = 'Page ' + (data.currentPage + 1) + ' of ' + totalPages;
                 document.getElementById('prevPage').disabled = currentPage === 0;

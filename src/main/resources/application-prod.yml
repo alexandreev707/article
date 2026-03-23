@@ -41,3 +41,5 @@ oxapay:
   return-url: ${OXAPAY_RETURN_URL}
   invoice-lifetime-minutes: ${OXAPAY_INVOICE_LIFETIME_MINUTES:30}
   currency: ${OXAPAY_CURRENCY:USD}
+  payout-currency: ${OXAPAY_PAYOUT_CURRENCY:USDT}
+  payout-network: ${OXAPAY_PAYOUT_NETWORK:TRC20}
