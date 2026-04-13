@@ -112,8 +112,21 @@
                 cartProductId: cartProductId
             }) };
             const response = await fetch('/api/checkout', opt);
-            if (!response.ok) throw new Error(await response.text());
-            const res = await response.json();
+            const raw = await response.text();
+            let res = null;
+            try {
+                res = raw ? JSON.parse(raw) : null;
+            } catch (parseErr) {
+                res = null;
+            }
+            if (!response.ok) {
+                const msg = (res && (res.message || res.error))
+                    || (raw && raw.indexOf('<!DOCTYPE') !== -1
+                        ? 'Server error during checkout. Check OXAPAY_MERCHANT_API_KEY, callback/return URL on the host, and server logs.'
+                        : raw);
+                throw new Error(typeof msg === 'string' ? msg : 'Checkout failed');
+            }
+            if (!res) throw new Error('Empty server response');
             const paymentUrl = res.paymentUrl;
             if (!paymentUrl) throw new Error('Payment URL is not available');
             window.location.href = paymentUrl;

@@ -16,7 +16,7 @@ class ProfileMvcController(
 
     @GetMapping
     fun profilePage(model: Model): String {
-        model.addAttribute("title", "Профиль - Marketplace")
+        model.addAttribute("title", "Profile - Marketplace")
         model.addAttribute("currentUser", userService.getCurrentUser())
         return "profile/index"
     }

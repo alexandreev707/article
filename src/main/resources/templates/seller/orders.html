@@ -43,7 +43,7 @@
                                         and order.status.name != 'CANCELLED'
                                         and order.status.name != 'REFUNDED'}"
                                     th:attr="data-order-id=${order.id}">
-                                Отправить заказ
+                                Ship order
                             </button>
                             <button type="button"
                                     class="btn-primary px-4 py-2 text-sm whitespace-nowrap payout-order-btn"
@@ -51,10 +51,10 @@
                                         and order.paymentStatus != null and order.paymentStatus.name == 'PAID'
                                         and (order.payoutTrackId == null or #strings.isEmpty(order.payoutTrackId))}"
                                     th:attr="data-order-id=${order.id}">
-                                Вывести средства
+                                Withdraw funds
                             </button>
                             <p class="text-xs text-emerald-700 max-w-xs text-right" th:if="${order.payoutTrackId != null and !#strings.isEmpty(order.payoutTrackId)}">
-                                Выплата оформлена (OxaPay): <span class="font-mono" th:text="${order.payoutTrackId}">—</span>
+                                Payout submitted (OxaPay): <span class="font-mono" th:text="${order.payoutTrackId}">—</span>
                             </p>
                         </div>
                     </div>
@@ -72,30 +72,30 @@
             </div>
         </div>
 
-        <!-- Ошибка OxaPay при выводе (неверный адрес и т.д.) -->
+        <!-- OxaPay payout error (invalid address, etc.) -->
         <div id="payoutErrorModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4" aria-hidden="true">
             <div id="payoutErrorModalBackdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
             <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200">
-                <h3 class="text-lg font-bold text-gray-900 mb-2">Не удалось вывести средства</h3>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Withdrawal failed</h3>
                 <p class="text-gray-600 text-sm mb-6 whitespace-pre-wrap" id="payoutErrorModalText"></p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-end">
-                    <button type="button" id="payoutErrorModalClose" class="btn-secondary px-4 py-2">Закрыть</button>
-                    <a th:href="@{/profile}" class="btn-primary px-4 py-2 text-center">Профиль</a>
+                    <button type="button" id="payoutErrorModalClose" class="btn-secondary px-4 py-2">Close</button>
+                    <a th:href="@{/profile}" class="btn-primary px-4 py-2 text-center">Profile</a>
                 </div>
             </div>
         </div>
 
-        <!-- Модальное окно: нужен адрес кошелька для вывода -->
+        <!-- Wallet address required for payout -->
         <div id="walletRequiredModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4" aria-hidden="true">
             <div id="walletRequiredModalBackdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
             <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200">
-                <h3 class="text-lg font-bold text-gray-900 mb-2">Нужен адрес кошелька</h3>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Wallet address required</h3>
                 <p class="text-gray-600 text-sm mb-6" id="walletRequiredModalText">
-                    Укажите адрес криптокошелька в профиле — на него будут отправлены средства через OxaPay после вывода.
+                    Add a crypto wallet address in your profile. Funds will be sent there via OxaPay after withdrawal.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-3 justify-end">
-                    <button type="button" id="walletRequiredModalClose" class="btn-secondary px-4 py-2 order-2 sm:order-1">Закрыть</button>
-                    <a th:href="@{/profile}" class="btn-primary px-4 py-2 text-center order-1 sm:order-2">Перейти в профиль</a>
+                    <button type="button" id="walletRequiredModalClose" class="btn-secondary px-4 py-2 order-2 sm:order-1">Close</button>
+                    <a th:href="@{/profile}" class="btn-primary px-4 py-2 text-center order-1 sm:order-2">Go to profile</a>
                 </div>
             </div>
         </div>

@@ -1,40 +1,40 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/layout}">
 <head>
-    <title>Профиль - Marketplace</title>
+    <title>Profile - Marketplace</title>
 </head>
 <body>
     <div th:fragment="content">
         <div class="container py-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-8">Профиль</h1>
+            <h1 class="text-3xl font-bold text-gray-900 mb-8">Profile</h1>
 
             <div class="max-w-xl">
                 <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4">Личные данные</h2>
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Personal details</h2>
                     <form id="profileForm" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                             <input type="text" id="email" readonly class="form-input w-full bg-gray-100 cursor-not-allowed" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Логин</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                             <input type="text" id="username" readonly class="form-input w-full bg-gray-100 cursor-not-allowed" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Имя</label>
-                            <input type="text" id="fullName" name="fullName" placeholder="Имя или полное имя" class="form-input w-full" />
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+                            <input type="text" id="fullName" name="fullName" placeholder="Your name" class="form-input w-full" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
-                            <input type="text" id="phoneNumber" name="phoneNumber" placeholder="+7 (999) 123-45-67" class="form-input w-full" />
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="text" id="phoneNumber" name="phoneNumber" placeholder="+1 555 123 4567" class="form-input w-full" />
                         </div>
                         <div th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).ADMIN))}">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Адрес кошелька для перевода средств</label>
-                            <input type="text" id="walletAddress" name="walletAddress" placeholder="Tron T… (для USDT TRC20) или 0x… (для ERC20)" class="form-input w-full" />
-                            <p class="text-xs text-gray-500 mt-1">Сеть задаётся в OXAPAY_PAYOUT_NETWORK (по умолчанию TRC20). Адрес должен совпадать с сетью: Tron ≠ Ethereum.</p>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Wallet address for payouts</label>
+                            <input type="text" id="walletAddress" name="walletAddress" placeholder="Tron T… (USDT TRC20) or 0x… (ERC20)" class="form-input w-full" />
+                            <p class="text-xs text-gray-500 mt-1">Network is set via OXAPAY_PAYOUT_NETWORK (default TRC20). The address must match the network (Tron vs Ethereum).</p>
                         </div>
                         <button type="submit" id="saveBtn" class="btn-primary px-6 py-2.5">
-                            Сохранить
+                            Save
                         </button>
                     </form>
                     <p id="profileMessage" class="mt-4 text-sm hidden"></p>

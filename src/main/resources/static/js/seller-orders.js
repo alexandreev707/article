@@ -51,7 +51,7 @@
             if (!orderId) return;
             btn.disabled = true;
             var label = btn.textContent;
-            btn.textContent = 'Отправка…';
+            btn.textContent = 'Sending…';
             try {
                 var r = await fetch('/api/orders/' + encodeURIComponent(orderId) + '/status', {
                     method: 'PUT',
@@ -65,7 +65,7 @@
                 window.location.reload();
             } catch (e) {
                 console.error(e);
-                alert('Не удалось отметить заказ отправленным. ' + (e.message || ''));
+                alert('Could not mark order as shipped. ' + (e.message || ''));
                 btn.disabled = false;
                 btn.textContent = label;
             }
@@ -76,10 +76,10 @@
         btn.addEventListener('click', async function () {
             var orderId = btn.getAttribute('data-order-id');
             if (!orderId) return;
-            if (!confirm('Вывести средства по этому заказу на кошелёк из профиля через OxaPay?')) return;
+            if (!confirm('Withdraw funds for this order to the wallet in your profile via OxaPay?')) return;
             btn.disabled = true;
             var label = btn.textContent;
-            btn.textContent = 'Запрос…';
+            btn.textContent = 'Requesting…';
             try {
                 var r = await fetch('/api/orders/' + encodeURIComponent(orderId) + '/payout', {
                     method: 'POST',
@@ -108,7 +108,7 @@
                 window.location.reload();
             } catch (e) {
                 console.error(e);
-                alert('Не удалось вывести средства. ' + (e.message || ''));
+                alert('Could not withdraw funds. ' + (e.message || ''));
                 btn.disabled = false;
                 btn.textContent = label;
             }

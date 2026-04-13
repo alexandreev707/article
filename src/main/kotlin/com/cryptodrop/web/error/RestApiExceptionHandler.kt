@@ -1,5 +1,6 @@
 package com.cryptodrop.web.error
 
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -7,6 +8,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
 class RestApiExceptionHandler {
+    private val log = LoggerFactory.getLogger(javaClass)
+
+    @ExceptionHandler(OxapayInvoiceException::class)
+    fun oxapayInvoice(ex: OxapayInvoiceException): ResponseEntity<Map<String, String>> {
+        log.warn("OxaPay invoice failed: {}", ex.message)
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
+            mapOf(
+                "error" to "OXAPAY_INVOICE_FAILED",
+                "message" to (ex.message ?: "Payment link could not be created")
+            )
+        )
+    }
 
     @ExceptionHandler(WalletRequiredException::class)
     fun walletRequired(ex: WalletRequiredException): ResponseEntity<Map<String, String>> =

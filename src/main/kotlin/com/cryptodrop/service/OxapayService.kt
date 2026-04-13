@@ -6,8 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
+import com.cryptodrop.web.error.OxapayInvoiceException
 import com.cryptodrop.web.error.OxapayPayoutException
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientException
 import java.math.BigDecimal
 
 @Service
@@ -21,20 +23,22 @@ class OxapayService(
 
     fun createInvoice(orderId: String, amount: BigDecimal): OxapayInvoiceResponse {
         if (!properties.enabled) {
-            throw IllegalStateException("OxaPay is disabled. Set OXAPAY_ENABLED=true to enable.")
+            throw OxapayInvoiceException("OxaPay is disabled (OXAPAY_ENABLED=false).")
         }
         val merchant = when {
             properties.sandboxEnabled -> properties.sandboxMerchant
             else -> properties.merchantApiKey
         }
         if (merchant.isBlank()) {
-            throw IllegalStateException("OxaPay merchant key is not configured.")
+            throw OxapayInvoiceException(
+                "OXAPAY_MERCHANT_API_KEY is not set. Add your OxaPay merchant key to the server environment (e.g. Render)."
+            )
         }
         if (properties.callbackUrl.isBlank()) {
-            throw IllegalStateException("OxaPay callback URL is not configured.")
+            throw OxapayInvoiceException("OXAPAY_CALLBACK_URL is not set.")
         }
         if (properties.returnUrl.isBlank()) {
-            throw IllegalStateException("OxaPay return URL is not configured.")
+            throw OxapayInvoiceException("OXAPAY_RETURN_URL is not set.")
         }
 
         val payload = mapOf(
@@ -48,28 +52,47 @@ class OxapayService(
             "sandbox" to properties.sandboxEnabled
         )
 
-        val body = restClient.post()
-            .uri("/merchants/request")
-            .body(payload)
-            .retrieve()
-            .onStatus(HttpStatusCode::isError) { _, response ->
-                val errorBody = String(response.body.readAllBytes())
-                throw IllegalStateException("OxaPay request failed: ${response.statusCode} - $errorBody")
-            }
-            .body(String::class.java)
-            ?: throw IllegalStateException("OxaPay returned empty response")
+        val body = try {
+            restClient.post()
+                .uri("/merchants/request")
+                .body(payload)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError) { _, response ->
+                    val errorBody = String(response.body.readAllBytes())
+                    val parsed = runCatching { objectMapper.readTree(errorBody) }.getOrNull()
+                    val apiMsg = parsed?.path("message")?.asText()?.trim().orEmpty()
+                        .ifBlank { errorBody.take(500) }
+                    throw OxapayInvoiceException("OxaPay rejected the invoice request: $apiMsg")
+                }
+                .body(String::class.java)
+        } catch (e: OxapayInvoiceException) {
+            throw e
+        } catch (e: RestClientException) {
+            throw OxapayInvoiceException(
+                "Could not reach OxaPay (${properties.baseUrl}). Check network connectivity and API availability.",
+                e
+            )
+        } ?: throw OxapayInvoiceException("OxaPay returned an empty response.")
 
         val json = objectMapper.readTree(body)
         val result = json.path("result").asInt(-1)
         if (result != 100) {
             val message = json.path("message").asText("Unknown OxaPay error")
-            throw IllegalStateException("OxaPay rejected invoice: $message")
+            val hint = when {
+                message.contains("Invalid merchant", ignoreCase = true) ||
+                    message.contains("merchant API key", ignoreCase = true) -> {
+                    " Set OXAPAY_MERCHANT_API_KEY to the Merchant key from the OxaPay dashboard (payment acceptance), not the Payout API key. " +
+                        "If sandbox is enabled (OXAPAY_SANDBOX_ENABLED=true), use the sandbox merchant key or OXAPAY_SANDBOX_MERCHANT."
+                }
+                else -> ""
+            }
+            throw OxapayInvoiceException("OxaPay: $message.$hint")
         }
 
         val trackId = firstPresent(json, "trackId", "track_id")
         val paymentUrl = firstPresent(json, "payLink", "paymentUrl", "pay_link")
         if (trackId.isBlank() || paymentUrl.isBlank()) {
-            throw IllegalStateException("OxaPay response is missing trackId/paymentUrl")
+            throw OxapayInvoiceException("OxaPay response has no payment link. Check the API response format.")
         }
 
         return OxapayInvoiceResponse(trackId = trackId, paymentUrl = paymentUrl)
@@ -161,11 +184,11 @@ class OxapayService(
             "invalid_address" -> OxapayPayoutException(
                 "INVALID_PAYOUT_ADDRESS",
                 buildString {
-                    append("OxaPay не принял адрес кошелька. ")
-                    append("Сейчас используется сеть $network и валюта $currency. ")
-                    append("Для USDT TRC20 нужен адрес Tron (начинается с «T», Base58). ")
-                    append("Если у вас кошелёк Ethereum (0x…), задайте в настройках OXAPAY_PAYOUT_NETWORK=ERC20 (или BEP20 для BSC). ")
-                    append("Исправьте адрес в профиле.")
+                    append("OxaPay rejected the wallet address. ")
+                    append("Current network: $network, currency: $currency. ")
+                    append("For USDT on TRC20 use a Tron address (starts with T, Base58). ")
+                    append("For an Ethereum wallet (0x…), set OXAPAY_PAYOUT_NETWORK=ERC20 (or BEP20 for BSC) in settings. ")
+                    append("Update the address in your profile.")
                 }
             )
             else -> OxapayPayoutException(

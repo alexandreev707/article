@@ -279,7 +279,7 @@ class OrderService(
         val seller = userService.findById(sellerId)
         val wallet = seller.walletAddress?.trim().orEmpty()
         if (wallet.isBlank()) {
-            throw WalletRequiredException("Укажите адрес кошелька в профиле для вывода средств")
+            throw WalletRequiredException("Add a wallet address in your profile to withdraw funds")
         }
 
         val trackId = oxapayService.createPayout(

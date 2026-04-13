@@ -85,7 +85,7 @@
                             <td><span class="badge ${order.status === 'DELIVERED' ? 'badge-success' : order.status === 'CANCELLED' ? 'badge-danger' : order.status === 'SHIPPED' ? 'badge-info' : order.status === 'CONFIRMED' ? 'badge-primary' : 'badge-warning'}">${order.status}</span></td>
                             <td><span class="badge ${paymentBadgeClass(order.paymentStatus)}">${pay}</span></td>
                             <td class="text-gray-500 text-sm">${new Date(order.createdAt).toLocaleDateString()}</td>
-                            <td class="whitespace-nowrap">${showDeliveryBtn ? '<button type="button" class="btn-primary text-sm px-3 py-1.5 confirm-delivery-btn" data-order-id="' + order.id + '">Заказ получен</button>' : ''}</td>
+                            <td class="whitespace-nowrap">${showDeliveryBtn ? '<button type="button" class="btn-primary text-sm px-3 py-1.5 confirm-delivery-btn" data-order-id="' + order.id + '">Order received</button>' : ''}</td>
                         </tr>
                     `;
                     }).join('') + '</tbody></table>';
@@ -108,7 +108,7 @@
                             loadOrders();
                         } catch (err) {
                             console.error(err);
-                            alert('Не удалось подтвердить получение. ' + (err.message || ''));
+                            alert('Could not confirm delivery. ' + (err.message || ''));
                             btn.disabled = false;
                             btn.textContent = lab;
                         }
