@@ -55,13 +55,14 @@ logging:
 
 oxapay:
   enabled: ${OXAPAY_ENABLED:true}
-  sandbox-enabled: ${OXAPAY_SANDBOX_ENABLED:true}
+  # Production OxaPay (sandbox off unless OXAPAY_SANDBOX_ENABLED=true)
+  sandbox-enabled: ${OXAPAY_SANDBOX_ENABLED:false}
   sandbox-merchant: ${OXAPAY_SANDBOX_MERCHANT:sandbox}
   base-url: ${OXAPAY_BASE_URL:https://api.oxapay.com}
-  merchant-api-key: ${OXAPAY_MERCHANT_API_KEY:NDVCVU-EVE3JI-I0GHHV-OLC9X7}
-  payout-api-key: ${OXAPAY_PAYOUT_API_KEY:8XYTFV-G9AZEC-XC6CNZ-61NPFI}
-  callback-url: ${OXAPAY_CALLBACK_URL:http://localhost:8082/api/checkout/oxapay/callback}
-  return-url: ${OXAPAY_RETURN_URL:http://localhost:8082/orders}
+  merchant-api-key: ${OXAPAY_MERCHANT_API_KEY:0TQI2K-U2LCTH-CHX6KK-VHZWVZ}
+  payout-api-key: ${OXAPAY_PAYOUT_API_KEY:YEFJBD-KW4FQ2-I680BB-DTDRFM}
+  callback-url: ${OXAPAY_CALLBACK_URL:https://article-aolc.onrender.com/api/checkout/oxapay/callback}
+  return-url: ${OXAPAY_RETURN_URL:https://article-aolc.onrender.com/orders}
   invoice-lifetime-minutes: ${OXAPAY_INVOICE_LIFETIME_MINUTES:30}
   currency: ${OXAPAY_CURRENCY:USD}
   payout-currency: ${OXAPAY_PAYOUT_CURRENCY:USDT}

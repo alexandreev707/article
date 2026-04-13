@@ -37,8 +37,8 @@ oxapay:
   base-url: ${OXAPAY_BASE_URL:https://api.oxapay.com}
   merchant-api-key: ${OXAPAY_MERCHANT_API_KEY}
   payout-api-key: ${OXAPAY_PAYOUT_API_KEY:}
-  callback-url: ${OXAPAY_CALLBACK_URL}
-  return-url: ${OXAPAY_RETURN_URL}
+  callback-url: ${OXAPAY_CALLBACK_URL:https://article-aolc.onrender.com/api/checkout/oxapay/callback}
+  return-url: ${OXAPAY_RETURN_URL:https://article-aolc.onrender.com/orders}
   invoice-lifetime-minutes: ${OXAPAY_INVOICE_LIFETIME_MINUTES:30}
   currency: ${OXAPAY_CURRENCY:USD}
   payout-currency: ${OXAPAY_PAYOUT_CURRENCY:USDT}
