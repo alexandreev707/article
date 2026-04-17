@@ -3,6 +3,7 @@ package com.cryptodrop.web.controller
 import com.cryptodrop.persistence.order.OrderStatus
 import com.cryptodrop.service.OrderService
 import com.cryptodrop.service.UserService
+import com.cryptodrop.service.dto.OrderCancelRequestDto
 import com.cryptodrop.service.dto.OrderCreateDto
 import com.cryptodrop.service.dto.OrderResponseDto
 import com.cryptodrop.service.dto.OrderStatusUpdateDto
@@ -93,6 +94,18 @@ class OrderController(
     fun updateOrderStatus(@PathVariable id: String, @Valid @RequestBody dto: OrderStatusUpdateDto): ResponseEntity<OrderResponseDto> {
         val sellerId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
         val order = orderService.updateOrderStatus(UUID.fromString(id), sellerId, dto)
+        return ResponseEntity.ok(orderService.toDto(order))
+    }
+
+    /** Buyer cancels before shipment; paid OxaPay orders require refund wallet in body. */
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    fun cancelOrder(
+        @PathVariable id: String,
+        @RequestBody(required = false) body: OrderCancelRequestDto?
+    ): ResponseEntity<OrderResponseDto> {
+        val buyerId = userService.getCurrentUserId() ?: throw IllegalStateException("User not authenticated")
+        val order = orderService.cancelOrderByBuyer(UUID.fromString(id), buyerId, body?.refundWalletAddress)
         return ResponseEntity.ok(orderService.toDto(order))
     }
 

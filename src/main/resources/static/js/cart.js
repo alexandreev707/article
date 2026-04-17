@@ -61,7 +61,7 @@
                             <button type="button" class="cart-qty-plus inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700" data-product-id="${item.productId}" ${item.quantity >= item.stock ? 'disabled' : ''}>+</button>
                         </div>
                         <a href="/cart/checkout?productId=${item.productId}" class="btn-primary text-sm py-2 px-4 whitespace-nowrap">Buy</a>
-                        <button type="button" class="cart-remove p-2 rounded-lg border border-gray-200 hover:bg-red-50 text-gray-500 hover:text-red-500" data-product-id="${item.productId}" title="Удалить">🗑️</button>
+                        <button type="button" class="cart-remove p-2 rounded-lg border border-gray-200 hover:bg-red-50 text-gray-500 hover:text-red-500" data-product-id="${item.productId}" title="Remove">🗑️</button>
                     </div>
                 </div>
             `;

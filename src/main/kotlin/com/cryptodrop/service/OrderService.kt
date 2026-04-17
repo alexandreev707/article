@@ -293,6 +293,71 @@ class OrderService(
         return orderRepository.save(order)
     }
 
+    /**
+     * Buyer cancels before shipment. Unpaid orders: cancel + restore stock.
+     * Paid OxaPay orders: payout refund to [refundWalletAddress], then cancel + restore stock.
+     */
+    @Transactional
+    fun cancelOrderByBuyer(orderId: UUID, buyerId: UUID, refundWalletAddress: String?): Order {
+        val order = orderRepository.findById(orderId)
+            .orElseThrow { IllegalArgumentException("Order not found: $orderId") }
+        if (order.buyer.id != buyerId) {
+            throw IllegalStateException("Only the buyer can cancel this order")
+        }
+        if (order.status in setOf(OrderStatus.CANCELLED, OrderStatus.REFUNDED)) {
+            throw IllegalStateException("Order is already cancelled")
+        }
+        if (order.status in setOf(OrderStatus.SHIPPED, OrderStatus.DELIVERED)) {
+            throw IllegalStateException("Cannot cancel: order has already been shipped or delivered")
+        }
+        if (order.oxapayRefundTrackId != null) {
+            throw IllegalStateException("A refund has already been issued for this order")
+        }
+
+        val needsCryptoRefund = order.paymentStatus == PaymentStatus.PAID &&
+            order.paymentMethod == PaymentMethod.OXAPAY
+
+        if (order.paymentStatus == PaymentStatus.PAID && order.paymentMethod != PaymentMethod.OXAPAY) {
+            throw IllegalStateException(
+                "Cancellation with automatic refund is only supported for OxaPay orders. Please contact support."
+            )
+        }
+
+        if (needsCryptoRefund) {
+            val wallet = refundWalletAddress?.trim().orEmpty()
+            if (wallet.isBlank()) {
+                throw WalletRequiredException("Enter a wallet address to receive your refund.")
+            }
+            val trackId = oxapayService.createPayout(
+                recipientAddress = wallet,
+                amount = order.totalPrice,
+                description = "Refund order ${order.orderNumber} (${order.id})"
+            )
+            order.oxapayRefundTrackId = trackId
+            order.paymentStatus = PaymentStatus.REFUNDED
+        }
+
+        restoreStock(order)
+        order.status = OrderStatus.CANCELLED
+        order.updatedAt = LocalDateTime.now()
+        logger.info("Order cancelled by buyer: $orderId, cryptoRefund=$needsCryptoRefund")
+        return orderRepository.save(order)
+    }
+
+    private fun restoreStock(order: Order) {
+        for (item in order.items) {
+            val productId = item.product.id ?: continue
+            val product = productRepository.findById(productId)
+                .orElseThrow { IllegalStateException("Product not found: $productId") }
+            productRepository.save(
+                product.copy(
+                    stock = product.stock + item.quantity,
+                    updatedAt = LocalDateTime.now()
+                )
+            )
+        }
+    }
+
     fun toDto(order: Order, productTitle: String? = null): OrderResponseDto {
         val item = order.items.firstOrNull()
             ?: throw IllegalStateException("Order has no items")
@@ -310,6 +375,7 @@ class OrderService(
             discountAmount = order.discountAmount.takeIf { it > BigDecimal.ZERO },
             status = order.status,
             paymentStatus = order.paymentStatus,
+            paymentMethod = order.paymentMethod,
             shippingAddress = AddressDto(
                 street = order.shippingAddress.addressLine,
                 city = order.shippingAddress.city,
@@ -320,7 +386,8 @@ class OrderService(
             createdAt = order.createdAt.format(dateFormatter),
             updatedAt = order.updatedAt.format(dateFormatter),
             deliveredAt = order.deliveredAt?.format(dateFormatter),
-            payoutTrackId = order.oxapayPayoutTrackId
+            payoutTrackId = order.oxapayPayoutTrackId,
+            refundTrackId = order.oxapayRefundTrackId
         )
     }
 }

@@ -67,6 +67,9 @@ data class Order(
     @Column(name = "oxapay_payout_track_id")
     var oxapayPayoutTrackId: String? = null,
 
+    @Column(name = "oxapay_refund_track_id")
+    var oxapayRefundTrackId: String? = null,
+
     @Embedded
     val shippingAddress: Address,
 

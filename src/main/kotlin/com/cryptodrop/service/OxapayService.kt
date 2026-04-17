@@ -105,17 +105,23 @@ class OxapayService(
      */
     fun createPayout(recipientAddress: String, amount: BigDecimal, description: String): String {
         if (!properties.enabled) {
-            throw IllegalStateException("OxaPay is disabled. Set OXAPAY_ENABLED=true to enable.")
+            throw OxapayPayoutException(
+                "OXAPAY_DISABLED",
+                "OxaPay is disabled. Set OXAPAY_ENABLED=true to enable payouts."
+            )
         }
         val payoutKey = properties.payoutApiKey.trim()
         if (payoutKey.isBlank()) {
-            throw IllegalStateException("OxaPay payout API key is not configured (OXAPAY_PAYOUT_API_KEY).")
+            throw OxapayPayoutException(
+                "PAYOUT_KEY_MISSING",
+                "OxaPay payout API key is not configured (OXAPAY_PAYOUT_API_KEY)."
+            )
         }
         val currency = properties.payoutCurrency.trim().ifBlank { "USDT" }
-        // OxaPay requires "network" for payouts (e.g. USDT on TRC20 vs ERC20).
-        val network = properties.payoutNetwork.trim().ifBlank { "TRC20" }
+        val trimmedAddress = recipientAddress.trim()
+        val network = resolvePayoutNetwork(trimmedAddress)
         val payload = mutableMapOf<String, Any>(
-            "address" to recipientAddress.trim(),
+            "address" to trimmedAddress,
             "currency" to currency,
             "amount" to amount,
             "network" to network
@@ -124,20 +130,38 @@ class OxapayService(
             payload["description"] = description
         }
 
-        val body = restClient.post()
-            .uri("/v1/payout")
-            .header("payout_api_key", payoutKey)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(payload)
-            .retrieve()
-            .onStatus(HttpStatusCode::isError) { _, response ->
-                val errorBody = String(response.body.readAllBytes())
-                throw mapPayoutError(errorBody, currency, network)
-            }
-            .body(String::class.java)
-            ?: throw IllegalStateException("OxaPay payout returned empty response")
+        val body = try {
+            restClient.post()
+                .uri("/v1/payout")
+                .header("payout_api_key", payoutKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError) { _, response ->
+                    val errorBody = String(response.body.readAllBytes())
+                    throw mapPayoutError(errorBody, currency, network)
+                }
+                .body(String::class.java)
+        } catch (e: OxapayPayoutException) {
+            throw e
+        } catch (e: RestClientException) {
+            throw OxapayPayoutException(
+                "OXAPAY_PAYOUT_ERROR",
+                "Could not reach OxaPay (${properties.baseUrl}): ${e.message ?: e.javaClass.simpleName}"
+            )
+        } ?: throw OxapayPayoutException(
+            "OXAPAY_PAYOUT_ERROR",
+            "OxaPay payout returned an empty response."
+        )
 
-        val json = objectMapper.readTree(body)
+        val json = try {
+            objectMapper.readTree(body)
+        } catch (e: Exception) {
+            throw OxapayPayoutException(
+                "OXAPAY_PAYOUT_ERROR",
+                "OxaPay payout response is not valid JSON: ${body.take(400)}"
+            )
+        }
         val data = json.path("data")
         var trackId = data.path("track_id").asText("").trim()
         if (trackId.isBlank()) trackId = data.path("trackId").asText("").trim()
@@ -145,7 +169,10 @@ class OxapayService(
             trackId = firstPresent(json, "track_id", "trackId").trim()
         }
         if (trackId.isBlank()) {
-            throw IllegalStateException("OxaPay payout response is missing track_id: $body")
+            throw OxapayPayoutException(
+                "OXAPAY_PAYOUT_ERROR",
+                "OxaPay payout succeeded but no track id was found in the response. Raw body: ${body.take(500)}"
+            )
         }
         return trackId
     }
@@ -172,28 +199,72 @@ class OxapayService(
     }
 
     /**
+     * Picks payout network from wallet address format:
+     * - EVM address `0x...` (40 hex chars) -> ERC20
+     * - Tron address `T...` (Base58-like) -> TRC20
+     * Falls back to config/default when format is unknown.
+     */
+    private fun inferPayoutNetworkFromAddress(address: String): String? {
+        val a = address.trim()
+        if (a.length == 42 && a.startsWith("0x", ignoreCase = true)) {
+            val hex = a.substring(2)
+            if (hex.length == 40 && hex.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }) {
+                return "ERC20"
+            }
+        }
+        if (a.length in 33..35 && a.startsWith("T") && a.all { it.isLetterOrDigit() }) {
+            return "TRC20"
+        }
+        return null
+    }
+
+    private fun resolvePayoutNetwork(recipientAddress: String): String =
+        inferPayoutNetworkFromAddress(recipientAddress)
+            ?: properties.payoutNetwork.trim().ifBlank { "TRC20" }
+
+    /**
      * Maps OxaPay JSON error to a client-friendly [OxapayPayoutException] (HTTP 400), not a servlet 500.
      */
     private fun mapPayoutError(errorBody: String, currency: String, network: String): OxapayPayoutException {
         val tree = runCatching { objectMapper.readTree(errorBody) }.getOrNull()
-        val key = tree?.path("error")?.path("key")?.asText()?.trim().orEmpty()
-        val apiMsg = tree?.path("error")?.path("message")?.asText()?.trim().orEmpty()
-            .ifBlank { tree?.path("message")?.asText()?.trim().orEmpty() }
+        val errorNode = tree?.path("error")
+        val key = when {
+            errorNode?.isObject == true -> errorNode.path("key").asText("").trim()
+            else -> ""
+        }.ifBlank { errorNode?.asText()?.trim().orEmpty() }
+
+        val apiMsg = when {
+            errorNode?.isObject == true -> errorNode.path("message").asText("").trim()
+            else -> ""
+        }.ifBlank { tree?.path("message")?.asText()?.trim().orEmpty() }
+            .ifBlank { tree?.path("msg")?.asText()?.trim().orEmpty() }
+            .ifBlank { tree?.path("detail")?.asText()?.trim().orEmpty() }
+            .ifBlank { tree?.path("description")?.asText()?.trim().orEmpty() }
+            .ifBlank {
+                val errs = tree?.path("errors")
+                if (errs != null && errs.isArray) {
+                    errs.joinToString("; ") { el ->
+                        el.path("message").asText("").trim()
+                            .ifBlank { el.asText("").trim() }
+                    }
+                } else ""
+            }
+
+        val human = apiMsg.ifBlank { errorBody.trim().ifBlank { "Unknown OxaPay payout error" } }
 
         return when (key) {
             "invalid_address" -> OxapayPayoutException(
                 "INVALID_PAYOUT_ADDRESS",
                 buildString {
-                    append("OxaPay rejected the wallet address. ")
-                    append("Current network: $network, currency: $currency. ")
-                    append("For USDT on TRC20 use a Tron address (starts with T, Base58). ")
-                    append("For an Ethereum wallet (0x…), set OXAPAY_PAYOUT_NETWORK=ERC20 (or BEP20 for BSC) in settings. ")
-                    append("Update the address in your profile.")
+                    append("OxaPay rejected the wallet address: $human ")
+                    append("(network: $network, currency: $currency). ")
+                    append("For USDT on TRC20 use a Tron address (starts with T). ")
+                    append("For ERC20 use an address starting with 0x.")
                 }
             )
             else -> OxapayPayoutException(
                 "OXAPAY_PAYOUT_ERROR",
-                apiMsg.ifBlank { "OxaPay: $errorBody" }
+                "OxaPay payout failed: $human"
             )
         }
     }

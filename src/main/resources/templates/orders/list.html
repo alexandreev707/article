@@ -36,12 +36,28 @@
             <span id="pageInfo" class="text-gray-600 font-medium">Page 1 of 1</span>
             <button type="button" id="nextPage" class="btn-secondary px-6 py-2">Next →</button>
         </div>
+
+        <div id="refundModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4" aria-modal="true" role="dialog">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 pointer-events-auto" role="document" onclick="event.stopPropagation()">
+                <h2 class="text-lg font-bold text-gray-900 mb-2">Refund to wallet</h2>
+                <p class="text-sm text-gray-600 mb-4">Your order was paid via OxaPay. Enter the wallet address for the refund. The order will be cancelled after OxaPay accepts the payout.</p>
+                <label for="refundWalletInput" class="block text-sm font-medium text-gray-700 mb-1">Wallet address</label>
+                <input type="text" id="refundWalletInput" class="form-input w-full" placeholder="TRC20 / EVM address" autocomplete="off">
+                <p id="refundModalError" class="mt-3 text-sm text-red-600 hidden" role="alert"></p>
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                    <button type="button" id="refundModalBack" class="btn-secondary w-full justify-center min-h-[48px] order-2 sm:order-1">Back</button>
+                    <button type="button" id="refundModalSubmit" class="btn-primary w-full justify-center min-h-[48px] text-sm px-4 py-3 order-1 sm:order-2" style="white-space: normal;">Confirm refund</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        const csrf = document.querySelector('meta[name="_csrf"]')?.content || '';
         let currentPage = 0;
         let currentStatus = 'active';
         const pageSize = 10;
+        let pendingRefundOrderId = null;
 
         function paymentBadgeClass(ps) {
             if (!ps) return 'badge-warning';
@@ -49,6 +65,61 @@
             if (ps === 'FAILED') return 'badge-danger';
             if (ps === 'REFUNDED') return 'badge-info';
             return 'badge-warning';
+        }
+
+        function closeRefundModal() {
+            document.getElementById('refundModal').classList.add('hidden');
+            pendingRefundOrderId = null;
+            document.getElementById('refundWalletInput').value = '';
+            var errEl = document.getElementById('refundModalError');
+            errEl.classList.add('hidden');
+            errEl.textContent = '';
+        }
+
+        function extractApiErrorMessage(text, status) {
+            if (!text || !String(text).trim()) {
+                return status ? ('Request failed (HTTP ' + status + ')') : 'Request failed';
+            }
+            var raw = String(text).trim();
+            if (raw.startsWith('<!')) {
+                return status ? ('Request failed (HTTP ' + status + ')') : 'Request failed';
+            }
+            try {
+                var j = JSON.parse(raw);
+                if (typeof j.message === 'string' && j.message.trim()) return j.message.trim();
+                if (typeof j.detail === 'string' && j.detail.trim()) return j.detail.trim();
+                if (typeof j.title === 'string' && j.title.trim() && j.title !== 'Bad Request') return j.title.trim();
+                if (typeof j.error === 'string' && j.error.trim()) {
+                    var code = j.error.trim();
+                    if (code !== 'Bad Request' && code !== 'Internal Server Error') return code;
+                }
+            } catch (e) { /* not JSON */ }
+            if (raw.length < 900) return raw;
+            return status ? ('Request failed (HTTP ' + status + ')') : 'Request failed';
+        }
+
+        async function postCancelOrder(orderId, refundWalletAddress) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrf) headers['X-CSRF-TOKEN'] = csrf;
+            const body = refundWalletAddress
+                ? JSON.stringify({ refundWalletAddress: refundWalletAddress })
+                : '{}';
+            const res = await fetch('/api/orders/' + encodeURIComponent(orderId) + '/cancel', {
+                method: 'POST',
+                headers: headers,
+                body: body,
+                credentials: 'same-origin'
+            });
+            const text = await res.text();
+            if (!res.ok) {
+                throw new Error(extractApiErrorMessage(text, res.status));
+            }
+            if (!text || !text.trim()) return {};
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                return {};
+            }
         }
 
         async function loadOrders() {
@@ -70,6 +141,16 @@
                     orders.map(order => {
                         const pay = order.paymentStatus || 'PENDING';
                         const showDeliveryBtn = order.status === 'SHIPPED';
+                        const canCancel = ['PENDING', 'CONFIRMED', 'PROCESSING'].includes(order.status);
+                        const needsRefundModal = order.paymentStatus === 'PAID' && order.paymentMethod === 'OXAPAY';
+                        const actionCells = [];
+                        if (showDeliveryBtn) {
+                            actionCells.push('<button type="button" class="btn-primary text-sm px-3 py-1.5 confirm-delivery-btn" data-order-id="' + order.id + '">Order received</button>');
+                        }
+                        if (canCancel) {
+                            actionCells.push('<button type="button" class="btn-secondary text-sm px-3 py-1.5 cancel-order-btn" data-order-id="' + order.id + '" data-needs-refund="' + (needsRefundModal ? '1' : '0') + '">Cancel order</button>');
+                        }
+                        const actionsHtml = actionCells.length ? actionCells.join(' ') : '';
                         return `
                         <tr class="hover:bg-gray-50">
                             <td class="cursor-pointer" onclick="window.location.href='/products/${order.productId}'">
@@ -85,7 +166,7 @@
                             <td><span class="badge ${order.status === 'DELIVERED' ? 'badge-success' : order.status === 'CANCELLED' ? 'badge-danger' : order.status === 'SHIPPED' ? 'badge-info' : order.status === 'CONFIRMED' ? 'badge-primary' : 'badge-warning'}">${order.status}</span></td>
                             <td><span class="badge ${paymentBadgeClass(order.paymentStatus)}">${pay}</span></td>
                             <td class="text-gray-500 text-sm">${new Date(order.createdAt).toLocaleDateString()}</td>
-                            <td class="whitespace-nowrap">${showDeliveryBtn ? '<button type="button" class="btn-primary text-sm px-3 py-1.5 confirm-delivery-btn" data-order-id="' + order.id + '">Order received</button>' : ''}</td>
+                            <td class="whitespace-nowrap"><div class="flex flex-wrap gap-2 justify-end">${actionsHtml}</div></td>
                         </tr>
                     `;
                     }).join('') + '</tbody></table>';
@@ -100,15 +181,47 @@
                         var lab = btn.textContent;
                         btn.textContent = '…';
                         try {
+                            var hdrs = { 'Content-Type': 'application/json' };
+                            if (csrf) hdrs['X-CSRF-TOKEN'] = csrf;
                             var res = await fetch('/api/orders/' + encodeURIComponent(oid) + '/confirm-delivery', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' }
+                                headers: hdrs
                             });
                             if (!res.ok) throw new Error(await res.text());
                             loadOrders();
                         } catch (err) {
                             console.error(err);
                             alert('Could not confirm delivery. ' + (err.message || ''));
+                            btn.disabled = false;
+                            btn.textContent = lab;
+                        }
+                    });
+                });
+
+                container.querySelectorAll('.cancel-order-btn').forEach(function (btn) {
+                    btn.addEventListener('click', async function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var oid = btn.getAttribute('data-order-id');
+                        var needsRefund = btn.getAttribute('data-needs-refund') === '1';
+                        if (!oid) return;
+                        if (needsRefund) {
+                            pendingRefundOrderId = oid;
+                            document.getElementById('refundWalletInput').value = '';
+                            document.getElementById('refundModal').classList.remove('hidden');
+                            document.getElementById('refundWalletInput').focus();
+                            return;
+                        }
+                        if (!confirm('Cancel this order? Stock will be returned to the seller.')) return;
+                        btn.disabled = true;
+                        var lab = btn.textContent;
+                        btn.textContent = '…';
+                        try {
+                            await postCancelOrder(oid, null);
+                            loadOrders();
+                        } catch (err) {
+                            console.error(err);
+                            alert('Could not cancel order. ' + (err.message || ''));
                             btn.disabled = false;
                             btn.textContent = lab;
                         }
@@ -133,6 +246,39 @@
                 currentStatus = document.getElementById('statusFilter').value;
                 currentPage = 0;
                 loadOrders();
+            });
+            document.getElementById('refundModalBack').addEventListener('click', closeRefundModal);
+            document.getElementById('refundModal').addEventListener('click', function (ev) {
+                if (ev.target.id === 'refundModal') closeRefundModal();
+            });
+            document.getElementById('refundModalSubmit').addEventListener('click', async function () {
+                if (!pendingRefundOrderId) return;
+                var w = document.getElementById('refundWalletInput').value.trim();
+                var errEl = document.getElementById('refundModalError');
+                errEl.classList.add('hidden');
+                errEl.textContent = '';
+                if (!w) {
+                    errEl.textContent = 'Please enter a wallet address.';
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+                var submitBtn = document.getElementById('refundModalSubmit');
+                submitBtn.disabled = true;
+                var prev = submitBtn.textContent;
+                submitBtn.textContent = '…';
+                try {
+                    await postCancelOrder(pendingRefundOrderId, w);
+                    closeRefundModal();
+                    loadOrders();
+                } catch (err) {
+                    console.error(err);
+                    var msg = err && err.message ? err.message : 'Could not complete refund.';
+                    errEl.textContent = msg;
+                    errEl.classList.remove('hidden');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = prev;
+                }
             });
         });
     </script>

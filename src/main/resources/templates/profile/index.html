@@ -31,7 +31,8 @@
                         <div th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).ADMIN))}">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Wallet address for payouts</label>
                             <input type="text" id="walletAddress" name="walletAddress" placeholder="Tron T… (USDT TRC20) or 0x… (ERC20)" class="form-input w-full" />
-                            <p class="text-xs text-gray-500 mt-1">Network is set via OXAPAY_PAYOUT_NETWORK (default TRC20). The address must match the network (Tron vs Ethereum).</p>
+                            <p class="text-xs text-gray-500 mt-1">Payout network is chosen automatically from the address (0x… → ERC20, Tron T… → TRC20)</p>
+                            <p class="text-xs text-amber-700 mt-1">Warning: if the wallet address is incorrect, funds may be sent to the wrong address and cannot be recovered.</p>
                         </div>
                         <button type="submit" id="saveBtn" class="btn-primary px-6 py-2.5">
                             Save

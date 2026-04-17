@@ -1,6 +1,7 @@
 package com.cryptodrop.service.dto
 
 import com.cryptodrop.persistence.order.OrderStatus
+import com.cryptodrop.persistence.order.PaymentMethod
 import com.cryptodrop.persistence.order.PaymentStatus
 import jakarta.validation.Valid
 import jakarta.validation.constraints.*
@@ -41,6 +42,7 @@ data class OrderResponseDto(
     val discountAmount: BigDecimal? = null,
     val status: OrderStatus,
     val paymentStatus: PaymentStatus? = null,
+    val paymentMethod: PaymentMethod? = null,
     val shippingAddress: AddressDto,
     val createdAt: String,
     val updatedAt: String,
@@ -48,6 +50,12 @@ data class OrderResponseDto(
     val deliveredAt: String? = null,
     /** OxaPay payout track id after seller withdraws funds */
     val payoutTrackId: String? = null,
+    /** OxaPay payout track id after buyer cancels a paid order (refund to wallet) */
+    val refundTrackId: String? = null,
+)
+
+data class OrderCancelRequestDto(
+    val refundWalletAddress: String? = null
 )
 
 data class OrderStatusUpdateDto(

@@ -27,7 +27,7 @@
             const walletEl = document.getElementById('walletAddress');
             if (walletEl) walletEl.value = profile.walletAddress || '';
         } catch (e) {
-            showMessage('Не удалось загрузить профиль', true);
+            showMessage('Could not load profile', true);
         }
     }
 
@@ -41,9 +41,9 @@
                 phoneNumber: document.getElementById('phoneNumber').value.trim() || null,
                 walletAddress: (document.getElementById('walletAddress') && document.getElementById('walletAddress').value.trim()) || null
             });
-            showMessage('Данные сохранены', false);
+            showMessage('Saved successfully', false);
         } catch (err) {
-            showMessage(err.message || 'Ошибка сохранения', true);
+            showMessage(err.message || 'Could not save profile', true);
         }
         btn.disabled = false;
     });
