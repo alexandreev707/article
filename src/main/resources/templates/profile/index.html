@@ -29,9 +29,9 @@
                             <input type="text" id="phoneNumber" name="phoneNumber" placeholder="+1 555 123 4567" class="form-input w-full" />
                         </div>
                         <div th:if="${currentUser != null and (currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).SELLER) or currentUser.roles.contains(T(com.cryptodrop.persistence.user.UserRole).ADMIN))}">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Wallet address for payouts</label>
-                            <input type="text" id="walletAddress" name="walletAddress" placeholder="Tron T… (USDT TRC20) or 0x… (ERC20)" class="form-input w-full" />
-                            <p class="text-xs text-gray-500 mt-1">Payout network is chosen automatically from the address (0x… → ERC20, Tron T… → TRC20)</p>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Wallet address for payouts (BSC / BEP-20 USDT)</label>
+                            <input type="text" id="walletAddress" name="walletAddress" placeholder="0x… (Binance Smart Chain, USDT BEP-20)" class="form-input w-full" />
+                            <p class="text-xs text-gray-500 mt-1">Withdrawals go to this address on BSC (BEP-20) as USDT via OxaPay — not Ethereum mainnet or Tron.</p>
                             <p class="text-xs text-amber-700 mt-1">Warning: if the wallet address is incorrect, funds may be sent to the wrong address and cannot be recovered.</p>
                         </div>
                         <button type="submit" id="saveBtn" class="btn-primary px-6 py-2.5">

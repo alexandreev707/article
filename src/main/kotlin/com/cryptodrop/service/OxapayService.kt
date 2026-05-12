@@ -11,6 +11,7 @@ import com.cryptodrop.web.error.OxapayPayoutException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientException
 import java.math.BigDecimal
+import java.util.Locale
 
 @Service
 class OxapayService(
@@ -198,29 +199,53 @@ class OxapayService(
         return ""
     }
 
+    /** OxaPay network id for BSC / BEP-20 (from GET /v1/common/networks). */
+    private val binanceSmartChainNetworkName = "Binance Smart Chain"
+
     /**
-     * Picks payout network from wallet address format:
-     * - EVM address `0x...` (40 hex chars) -> ERC20
-     * - Tron address `T...` (Base58-like) -> TRC20
-     * Falls back to config/default when format is unknown.
+     * Payouts are restricted to BSC (BEP-20): always send OxaPay `network` = [binanceSmartChainNetworkName],
+     * and require a valid EVM `0x` address (same format as on BSC).
      */
-    private fun inferPayoutNetworkFromAddress(address: String): String? {
-        val a = address.trim()
-        if (a.length == 42 && a.startsWith("0x", ignoreCase = true)) {
-            val hex = a.substring(2)
-            if (hex.length == 40 && hex.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }) {
-                return "ERC20"
-            }
-        }
-        if (a.length in 33..35 && a.startsWith("T") && a.all { it.isLetterOrDigit() }) {
-            return "TRC20"
-        }
-        return null
+    private fun resolvePayoutNetwork(recipientAddress: String): String {
+        validateBinanceSmartChainRecipient(recipientAddress)
+        return normalizeToBinanceSmartChainOnly(properties.payoutNetwork)
     }
 
-    private fun resolvePayoutNetwork(recipientAddress: String): String =
-        inferPayoutNetworkFromAddress(recipientAddress)
-            ?: properties.payoutNetwork.trim().ifBlank { "TRC20" }
+    private fun normalizeToBinanceSmartChainOnly(raw: String): String {
+        val r = raw.trim()
+        if (r.isBlank()) return binanceSmartChainNetworkName
+        val compact = r.uppercase(Locale.ROOT).replace("-", "").replace(" ", "")
+        val isBsc = compact == "BINANCESMARTCHAIN" ||
+            compact in setOf("BEP20", "BSC", "BINANCE", "BNB")
+        if (isBsc) return binanceSmartChainNetworkName
+        throw OxapayPayoutException(
+            "UNSUPPORTED_PAYOUT_NETWORK",
+            "Payouts are only on BSC (BEP-20). Set OXAPAY_PAYOUT_NETWORK to Binance Smart Chain, BEP20, or BSC (current: $r)."
+        )
+    }
+
+    private fun validateBinanceSmartChainRecipient(address: String) {
+        val a = address.trim()
+        val looksTron = a.startsWith("T") && a.length in 33..36 && a.all { it.isLetterOrDigit() }
+        if (looksTron) {
+            throw OxapayPayoutException(
+                "INVALID_PAYOUT_ADDRESS",
+                "Payouts use BSC (BEP-20) only. Use a Binance Smart Chain wallet address (0x…), not a Tron (T…) address."
+            )
+        }
+        if (!isValidHexEvmAddress(a)) {
+            throw OxapayPayoutException(
+                "INVALID_PAYOUT_ADDRESS",
+                "Payouts use BSC (BEP-20) only. Enter a valid EVM address: 0x followed by 40 hexadecimal characters."
+            )
+        }
+    }
+
+    private fun isValidHexEvmAddress(a: String): Boolean {
+        if (a.length != 42 || !a.startsWith("0x", ignoreCase = true)) return false
+        val hex = a.substring(2)
+        return hex.length == 40 && hex.all { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }
+    }
 
     /**
      * Maps OxaPay JSON error to a client-friendly [OxapayPayoutException] (HTTP 400), not a servlet 500.
@@ -258,8 +283,7 @@ class OxapayService(
                 buildString {
                     append("OxaPay rejected the wallet address: $human ")
                     append("(network: $network, currency: $currency). ")
-                    append("For USDT on TRC20 use a Tron address (starts with T). ")
-                    append("For ERC20 use an address starting with 0x.")
+                    append("Payouts are on BSC (BEP-20) only — use a valid BSC USDT address (EVM 0x…).")
                 }
             )
             else -> OxapayPayoutException(

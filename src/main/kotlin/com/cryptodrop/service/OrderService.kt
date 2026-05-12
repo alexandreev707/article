@@ -279,7 +279,9 @@ class OrderService(
         val seller = userService.findById(sellerId)
         val wallet = seller.walletAddress?.trim().orEmpty()
         if (wallet.isBlank()) {
-            throw WalletRequiredException("Add a wallet address in your profile to withdraw funds")
+            throw WalletRequiredException(
+                "Add a BSC (BEP-20) USDT wallet address (0x…) in your profile to withdraw funds"
+            )
         }
 
         val trackId = oxapayService.createPayout(
@@ -326,7 +328,7 @@ class OrderService(
         if (needsCryptoRefund) {
             val wallet = refundWalletAddress?.trim().orEmpty()
             if (wallet.isBlank()) {
-                throw WalletRequiredException("Enter a wallet address to receive your refund.")
+                throw WalletRequiredException("Enter a BSC (BEP-20) USDT wallet address (0x…) to receive your refund.")
             }
             val trackId = oxapayService.createPayout(
                 recipientAddress = wallet,

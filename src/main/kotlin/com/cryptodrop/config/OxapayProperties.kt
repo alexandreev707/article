@@ -18,6 +18,9 @@ class OxapayProperties {
     var currency: String = "USD"
     /** Cryptocurrency symbol for seller payouts (e.g. USDT, BTC) */
     var payoutCurrency: String = "USDT"
-    /** Blockchain network (required by OxaPay for USDT; default TRC20). Override via OXAPAY_PAYOUT_NETWORK. */
-    var payoutNetwork: String = "TRC20"
+    /**
+     * OxaPay payout network name (see GET /v1/common/networks). This app sends seller payouts only on BSC (BEP-20).
+     * Default matches OxaPay: "Binance Smart Chain". Aliases BEP20, BSC are normalized in OxapayService.
+     */
+    var payoutNetwork: String = "Binance Smart Chain"
 }

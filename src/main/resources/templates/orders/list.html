@@ -40,9 +40,9 @@
         <div id="refundModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4" aria-modal="true" role="dialog">
             <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 pointer-events-auto" role="document" onclick="event.stopPropagation()">
                 <h2 class="text-lg font-bold text-gray-900 mb-2">Refund to wallet</h2>
-                <p class="text-sm text-gray-600 mb-4">Your order was paid via OxaPay. Enter the wallet address for the refund. The order will be cancelled after OxaPay accepts the payout.</p>
+                <p class="text-sm text-gray-600 mb-4">Your order was paid via OxaPay. Refunds are sent as USDT on BSC (BEP-20) only. Enter your BSC wallet address (0x…). The order will be cancelled after OxaPay accepts the payout.</p>
                 <label for="refundWalletInput" class="block text-sm font-medium text-gray-700 mb-1">Wallet address</label>
-                <input type="text" id="refundWalletInput" class="form-input w-full" placeholder="TRC20 / EVM address" autocomplete="off">
+                <input type="text" id="refundWalletInput" class="form-input w-full" placeholder="0x… BSC (BEP-20) USDT address" autocomplete="off">
                 <p id="refundModalError" class="mt-3 text-sm text-red-600 hidden" role="alert"></p>
                 <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                     <button type="button" id="refundModalBack" class="btn-secondary w-full justify-center min-h-[48px] order-2 sm:order-1">Back</button>

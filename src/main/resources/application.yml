@@ -56,7 +56,7 @@ logging:
 oxapay:
   enabled: ${OXAPAY_ENABLED:true}
   # Production OxaPay (sandbox off unless OXAPAY_SANDBOX_ENABLED=true)
-  sandbox-enabled: ${OXAPAY_SANDBOX_ENABLED:false}
+  sandbox-enabled: ${OXAPAY_SANDBOX_ENABLED:true}
   sandbox-merchant: ${OXAPAY_SANDBOX_MERCHANT:sandbox}
   base-url: ${OXAPAY_BASE_URL:https://api.oxapay.com}
   merchant-api-key: ${OXAPAY_MERCHANT_API_KEY:0TQI2K-U2LCTH-CHX6KK-VHZWVZ}
@@ -66,4 +66,4 @@ oxapay:
   invoice-lifetime-minutes: ${OXAPAY_INVOICE_LIFETIME_MINUTES:30}
   currency: ${OXAPAY_CURRENCY:USD}
   payout-currency: ${OXAPAY_PAYOUT_CURRENCY:USDT}
-  payout-network: ${OXAPAY_PAYOUT_NETWORK:TRC20}
+  payout-network: "${OXAPAY_PAYOUT_NETWORK:Binance Smart Chain}"

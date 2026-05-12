@@ -76,7 +76,7 @@
         btn.addEventListener('click', async function () {
             var orderId = btn.getAttribute('data-order-id');
             if (!orderId) return;
-            if (!confirm('Withdraw funds for this order to the wallet in your profile via OxaPay?')) return;
+            if (!confirm('Withdraw USDT on BSC (BEP-20) to the wallet address in your profile via OxaPay?')) return;
             btn.disabled = true;
             var label = btn.textContent;
             btn.textContent = 'Requesting…';
@@ -97,7 +97,7 @@
                         btn.textContent = label;
                         return;
                     }
-                    if (r.status === 400 && errJson && (errJson.error === 'INVALID_PAYOUT_ADDRESS' || errJson.error === 'OXAPAY_PAYOUT_ERROR')) {
+                    if (r.status === 400 && errJson && (errJson.error === 'INVALID_PAYOUT_ADDRESS' || errJson.error === 'OXAPAY_PAYOUT_ERROR' || errJson.error === 'UNSUPPORTED_PAYOUT_NETWORK')) {
                         showPayoutErrorModal(errJson.message);
                         btn.disabled = false;
                         btn.textContent = label;
