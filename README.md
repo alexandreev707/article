@@ -306,11 +306,11 @@ keycloak:
 docker run -d \
 --name marketplace-postgres \
 -e POSTGRES_DB=cryptodrop \
--e POSTGRES_USER=postgres \
+ e POSTGRES_USER=postgres \
 -e POSTGRES_PASSWORD=admin \
 -p 5434:5432 \
 -v postgres_data:/var/lib/postgresql/data \
-postgres:16-alpine
+postgres:16-alpine-
 
 
 

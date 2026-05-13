@@ -1,15 +1,15 @@
-# Профиль prod — для Render и других хостингов
 spring:
   flyway:
     enabled: true
     clean-disabled: true
     validate-on-migrate: true
+
   datasource:
-    # Render (и многие облачные Postgres) требуют SSL — без sslmode=require часто EOF при auth
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}?sslmode=${DB_SSL_MODE:require}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require&gssEncMode=disable
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -17,6 +17,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
   thymeleaf:
     cache: true
 
@@ -29,6 +30,11 @@ logging:
     root: INFO
     com.cryptodrop: INFO
     org.springframework.security: WARN
+
+app:
+  jwt:
+    cookie-secure: true
+    secret: ${JWT_SECRET:prod-set-JWT_SECRET-to-a-long-random-string}
 
 oxapay:
   enabled: ${OXAPAY_ENABLED:true}

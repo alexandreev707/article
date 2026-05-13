@@ -49,6 +49,12 @@ data class User(
     @Column(name = "wallet_address")
     val walletAddress: String? = null,
 
+    @Column(name = "oauth_provider", length = 32)
+    val oauthProvider: String? = null,
+
+    @Column(name = "oauth_subject", length = 512)
+    val oauthSubject: String? = null,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 

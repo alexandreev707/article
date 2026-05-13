@@ -8,6 +8,7 @@ import com.cryptodrop.service.dto.UpdateProfileDto
 import com.cryptodrop.service.dto.UserResponseDto
 import org.slf4j.LoggerFactory
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -24,12 +25,14 @@ class UserService(
     fun getCurrentUser(): User? {
         return try {
             val authentication: Authentication? = SecurityContextHolder.getContext().authentication
-            if (authentication != null && authentication.isAuthenticated) {
-                val username = authentication.name
-                userRepository.findByUsername(username).orElse(null)
-            } else {
-                null
+            if (authentication == null ||
+                !authentication.isAuthenticated ||
+                authentication is AnonymousAuthenticationToken
+            ) {
+                return null
             }
+            val username = authentication.name
+            userRepository.findByUsername(username).orElse(null)
         } catch (e: Exception) {
             null
         }

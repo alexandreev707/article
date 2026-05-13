@@ -9,6 +9,7 @@ import java.util.UUID
 interface UserRepository : JpaRepository<User, UUID> {
     fun findByEmail(email: String): Optional<User>
     fun findByUsername(username: String): Optional<User>
+    fun findByOauthProviderAndOauthSubject(provider: String, subject: String): Optional<User>
     fun findByRolesContaining(role: UserRole): List<User>
     fun findByBlocked(blocked: Boolean): List<User>
 }
